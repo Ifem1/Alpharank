@@ -15,7 +15,7 @@ import {
   updatePendingEvalStage, STAGE_LABEL,
   type EvalStage,
 } from '@/lib/pending-tx';
-import type { Project, Evaluation } from '@/types';
+import type { Project, Evaluation, FactCheckReport, FactCheckVerdict } from '@/types';
 
 interface EvaluationPanelProps {
   project: Project;

@@ -1,4 +1,4 @@
-# v0.2.17
+# v0.2.18
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
 from genlayer import *
@@ -171,7 +171,14 @@ class AlphaRank(gl.Contract):
 
         assert project["status"] == "evaluating", "Project not in evaluating state"
 
-        scores = self._evaluate_all_scores(project)
+        # Step 1: Fetch live web evidence for fact-checking
+        web_evidence = self._fetch_web_evidence(project)
+
+        # Step 2: Fact-check project claims against live data
+        fact_check = self._fact_check_claims(project, web_evidence)
+
+        # Step 3: Score using both submitted claims AND verified web evidence
+        scores = self._evaluate_all_scores(project, web_evidence, fact_check)
 
         technical_score = self._bounded_score(scores.get("technical_score", 50))
         team_score = self._bounded_score(scores.get("team_score", 50))
@@ -220,6 +227,8 @@ class AlphaRank(gl.Contract):
                 security_score,
             )),
             "recommendations": self._safe_list(scores.get("recommendations", []), self._generate_recommendations(project, overall_score)),
+            "fact_check_report": fact_check,
+            "web_evidence_urls": self._summarize_web_evidence_urls(project),
             "evaluation_hash": self._generate_evidence_hash({
                 "project_id": project_id,
                 "overall_score": overall_score,
@@ -386,65 +395,279 @@ class AlphaRank(gl.Contract):
         })
 
     # ──────────────────────────────────────────
-    # AI Scoring With Custom Validator
+    # Web Fact-Checking (GenLayer get_webpage)
     # ──────────────────────────────────────────
 
-    def _evaluate_all_scores(self, project: dict) -> dict:
+    def _fetch_web_evidence(self, project: dict) -> dict:
+        """
+        Fetch live content from each URL the project submitted, plus third-party
+        intelligence from aggregators. Uses gl.get_webpage() — a GenLayer native.
+        """
+        evidence = {}
+
+        def _safe_fetch(url: str, label: str, max_len: int = 3000) -> None:
+            if not url or not str(url).startswith("http"):
+                evidence[label] = "no_url_provided"
+                return
+            try:
+                content = gl.get_webpage(str(url), mode="text")
+                evidence[label] = str(content)[:max_len] if content else "empty_response"
+            except Exception as e:
+                evidence[label] = f"fetch_failed: {str(e)[:120]}"
+
+        # Project's own URLs
+        _safe_fetch(project.get("website", ""), "website")
+        _safe_fetch(project.get("whitepaper_url", ""), "whitepaper")
+        _safe_fetch(project.get("docs_url", ""), "docs")
+        _safe_fetch(project.get("bug_bounty_url", ""), "bug_bounty")
+
+        # Fetch up to 2 GitHub repos
+        repos = project.get("github_repos", [])
+        if isinstance(repos, list):
+            for i, repo_url in enumerate(repos[:2]):
+                _safe_fetch(repo_url, f"github_repo_{i + 1}", max_len=2000)
+
+        # Fetch audit report URLs if provided
+        audits = project.get("audits", [])
+        if isinstance(audits, list):
+            for i, audit in enumerate(audits[:2]):
+                audit_url = audit.get("url", "") if isinstance(audit, dict) else str(audit)
+                _safe_fetch(audit_url, f"audit_{i + 1}", max_len=2000)
+
+        # Third-party intelligence
+        third_party = self._fetch_external_intelligence(project)
+        evidence.update(third_party)
+
+        return evidence
+
+    def _fetch_external_intelligence(self, project: dict) -> dict:
+        """
+        Fetch third-party signals for the project from public aggregators
+        and search engines. Independent of URLs the project itself submitted.
+        """
+        intel = {}
+        name = project.get("name", "")
+        category = project.get("category", "").lower()
+
+        def _safe_fetch(url: str, label: str, max_len: int = 1500) -> None:
+            if not url:
+                return
+            try:
+                content = gl.get_webpage(url, mode="text")
+                intel[label] = str(content)[:max_len] if content else "empty_response"
+            except Exception as e:
+                intel[label] = f"fetch_failed: {str(e)[:80]}"
+
+        # CoinGecko search for the project
+        if name:
+            cg_search = f"https://www.coingecko.com/en/search?query={name.replace(' ', '+')}"
+            _safe_fetch(cg_search, "coingecko_search", max_len=2000)
+
+        # DeFiLlama — relevant for DeFi / RWA / DePIN categories
+        if category in ("defi", "rwa", "depin", "infrastructure"):
+            _safe_fetch("https://defillama.com/protocols", "defillama_protocols", max_len=1500)
+
+        # GitHub search for the project name to find independent forks / mentions
+        if name:
+            gh_search = f"https://github.com/search?q={name.replace(' ', '+')}&type=repositories"
+            _safe_fetch(gh_search, "github_search", max_len=1500)
+
+        # Fetch GitHub API commit activity for any submitted repos
+        repos = project.get("github_repos", [])
+        if isinstance(repos, list):
+            for i, repo_url in enumerate(repos[:2]):
+                api_url = self._github_repo_to_api(str(repo_url))
+                if api_url:
+                    _safe_fetch(api_url, f"github_api_repo_{i + 1}", max_len=1000)
+
+        return intel
+
+    def _github_repo_to_api(self, repo_url: str) -> str:
+        """Convert a GitHub HTML URL to the GitHub REST API endpoint."""
+        try:
+            if "github.com/" not in repo_url:
+                return ""
+            parts = repo_url.rstrip("/").split("github.com/")[-1].split("/")
+            if len(parts) >= 2:
+                owner, repo = parts[0], parts[1]
+                return f"https://api.github.com/repos/{owner}/{repo}"
+        except Exception:
+            pass
+        return ""
+
+    def _fact_check_claims(self, project: dict, web_evidence: dict) -> dict:
+        """
+        Cross-reference the project's submitted claims against live web content
+        AND third-party aggregator intelligence, using GenLayer's Equivalence Principle
+        for decentralised validator consensus.
+        """
+        project_name = project.get("name", "Unknown")
+        project_description = project.get("description", "")[:500]
+        team = json.dumps(project.get("team", []))[:400]
+        audits = json.dumps(project.get("audits", []))[:400]
+        partnerships = json.dumps(project.get("partnerships", []))[:400]
+        investors = json.dumps(project.get("investors", []))[:400]
+        website_content = web_evidence.get("website", "not fetched")[:1200]
+        whitepaper_content = web_evidence.get("whitepaper", "not fetched")[:1200]
+        docs_content = web_evidence.get("docs", "not fetched")[:800]
+        bug_bounty_content = web_evidence.get("bug_bounty", "not fetched")[:400]
+        github_1 = web_evidence.get("github_repo_1", "not fetched")[:600]
+        github_2 = web_evidence.get("github_repo_2", "not fetched")[:600]
+        github_api_1 = web_evidence.get("github_api_repo_1", "not fetched")[:500]
+        github_api_2 = web_evidence.get("github_api_repo_2", "not fetched")[:500]
+        audit_1 = web_evidence.get("audit_1", "not fetched")[:500]
+        audit_2 = web_evidence.get("audit_2", "not fetched")[:500]
+        coingecko = web_evidence.get("coingecko_search", "not fetched")[:800]
+        defillama = web_evidence.get("defillama_protocols", "not fetched")[:600]
+        github_search = web_evidence.get("github_search", "not fetched")[:600]
+
+        prompt = f"""You are a blockchain project fact-checker with both project-submitted and third-party web evidence.
+
+Project name: {project_name}
+Project description (claimed): {project_description}
+Team (claimed): {team}
+Audits (claimed): {audits}
+Partnerships (claimed): {partnerships}
+Investors (claimed): {investors}
+
+=== PROJECT-SUBMITTED WEB EVIDENCE ===
+Website: {website_content}
+Whitepaper: {whitepaper_content}
+Docs: {docs_content}
+Bug bounty: {bug_bounty_content}
+GitHub repo 1: {github_1}
+GitHub repo 2: {github_2}
+GitHub API repo 1 (stars/forks/activity): {github_api_1}
+GitHub API repo 2 (stars/forks/activity): {github_api_2}
+Audit 1: {audit_1}
+Audit 2: {audit_2}
+
+=== THIRD-PARTY INTELLIGENCE ===
+CoinGecko search results: {coingecko}
+DeFiLlama protocols: {defillama}
+GitHub independent search: {github_search}
+
+=== INSTRUCTIONS ===
+Fact-check ALL claims using BOTH project-submitted URLs and third-party sources.
+Third-party sources (CoinGecko, DeFiLlama, GitHub search) carry MORE weight than self-reported data.
+Use these verdict labels: "verified", "partially_verified", "unverified", "disputed", "not_checkable"
+
+Return ONLY valid JSON:
+{{
+  "website_live": "<verified|unverified|fetch_failed>",
+  "website_matches_description": "<verified|partially_verified|disputed|not_checkable>",
+  "team_verifiable": "<verified|partially_verified|unverified|not_checkable>",
+  "audit_reports_accessible": "<verified|partially_verified|unverified|not_checkable>",
+  "bug_bounty_active": "<verified|unverified|not_checkable>",
+  "github_repos_active": "<verified|partially_verified|unverified|not_checkable>",
+  "github_recent_commits": "<verified|unverified|not_checkable>",
+  "partnerships_mentioned_online": "<verified|partially_verified|unverified|not_checkable>",
+  "investors_mentioned_online": "<verified|partially_verified|unverified|not_checkable>",
+  "listed_on_coingecko": "<verified|unverified|not_checkable>",
+  "listed_on_defillama": "<verified|unverified|not_checkable>",
+  "independent_github_presence": "<verified|unverified|not_checkable>",
+  "overall_credibility": "<high|medium|low|very_low>",
+  "red_flags": ["<flag1>", "<flag2>"],
+  "verified_highlights": ["<highlight1>", "<highlight2>"],
+  "fact_check_summary": "<1-2 sentence plain-English summary of what was and was not verifiable, citing third-party sources>"
+}}"""
+
+        result = gl.eq_principle.prompt_non_comparative(
+            prompt,
+            lambda output: isinstance(self._safe_json_loads(output, None), dict)
+        )
+
+        parsed = self._safe_json_loads(result, self._default_fact_check())
+        if not isinstance(parsed, dict):
+            return self._default_fact_check()
+        return parsed
+
+    def _default_fact_check(self) -> dict:
+        return {
+            "website_live": "not_checkable",
+            "website_matches_description": "not_checkable",
+            "team_verifiable": "not_checkable",
+            "audit_reports_accessible": "not_checkable",
+            "bug_bounty_active": "not_checkable",
+            "github_repos_active": "not_checkable",
+            "github_recent_commits": "not_checkable",
+            "partnerships_mentioned_online": "not_checkable",
+            "investors_mentioned_online": "not_checkable",
+            "listed_on_coingecko": "not_checkable",
+            "listed_on_defillama": "not_checkable",
+            "independent_github_presence": "not_checkable",
+            "overall_credibility": "medium",
+            "red_flags": [],
+            "verified_highlights": [],
+            "fact_check_summary": "Web evidence could not be evaluated.",
+        }
+
+    def _summarize_web_evidence_urls(self, project: dict) -> dict:
+        urls = {}
+        for field in ["website", "whitepaper_url", "docs_url", "bug_bounty_url"]:
+            val = project.get(field, "")
+            if val:
+                urls[field] = val
+        repos = project.get("github_repos", [])
+        if isinstance(repos, list):
+            urls["github_repos"] = repos[:2]
+        name = project.get("name", "")
+        if name:
+            urls["third_party_coingecko"] = f"https://www.coingecko.com/en/search?query={name.replace(' ', '+')}"
+            urls["third_party_github_search"] = f"https://github.com/search?q={name.replace(' ', '+')}&type=repositories"
+        return urls
+
+    # ──────────────────────────────────────────
+    # AI Scoring With Web-Grounded Evidence
+    # ──────────────────────────────────────────
+
+    def _evaluate_all_scores(self, project: dict, web_evidence: dict, fact_check: dict) -> dict:
         project_context = json.dumps(project, sort_keys=True)
+        web_summary = self._build_web_evidence_summary(web_evidence)
+        fact_check_summary = fact_check.get("fact_check_summary", "")
+        overall_credibility = fact_check.get("overall_credibility", "medium")
+        red_flags = json.dumps(fact_check.get("red_flags", []))
+        verified_highlights = json.dumps(fact_check.get("verified_highlights", []))
 
-        prompt = f"""
-You are AlphaRank, an AI crypto project evaluation engine.
+        coingecko_listed = fact_check.get("listed_on_coingecko", "not_checkable")
+        defillama_listed = fact_check.get("listed_on_defillama", "not_checkable")
+        github_independent = fact_check.get("independent_github_presence", "not_checkable")
 
-Evaluate the project below and return ONLY valid JSON.
+        prompt = f"""You are AlphaRank, an AI crypto project evaluation engine with web verification capabilities.
 
-Project JSON:
+You have the project's submitted claims, live web evidence from their own URLs, PLUS third-party
+intelligence from CoinGecko, DeFiLlama, and GitHub independent search.
+Score based on what is VERIFIABLE — third-party sources outweigh self-reported data.
+
+=== PROJECT CLAIMS ===
 {project_context}
 
-Score each category from 0 to 100:
+=== LIVE WEB EVIDENCE SUMMARY ===
+{web_summary}
 
-1. technical_score:
-   - protocol architecture clarity
-   - technical innovation
-   - documentation completeness
-   - repository transparency
-   - feasibility
+=== FACT-CHECK RESULTS (including third-party) ===
+Overall credibility: {overall_credibility}
+CoinGecko listing status: {coingecko_listed}
+DeFiLlama listing status: {defillama_listed}
+Independent GitHub presence: {github_independent}
+Red flags found: {red_flags}
+Verified highlights: {verified_highlights}
+Summary: {fact_check_summary}
 
-2. team_score:
-   - team completeness
-   - verifiable credentials
-   - relevant experience
-   - transparency
-   - backer credibility
+=== SCORING INSTRUCTIONS ===
+Score each category 0-100. Weight verified and third-party evidence heavily. Penalise unverifiable or disputed claims.
+If red flags exist, reduce affected scores proportionally.
+If overall_credibility is "low" or "very_low", cap overall score at 60.
+Being listed on CoinGecko or DeFiLlama is strong positive evidence; boost market_fit_score and execution_score accordingly.
 
-3. market_fit_score:
-   - problem clarity
-   - market need
-   - differentiation
-   - traction signals
-   - go-to-market credibility
+1. technical_score — architecture, innovation, docs completeness, repo activity (verified)
+2. team_score — team verifiability online, credentials, transparency
+3. market_fit_score — problem clarity, differentiation, traction signals found online
+4. security_score — audit accessibility, bug bounty live, open-source verification
+5. execution_score — shipped product evidence on website/github, roadmap specificity
+6. token_utility_score — token necessity, supply logic, value capture alignment
 
-4. security_score:
-   - audit coverage
-   - audit credibility
-   - bug bounty
-   - open-source transparency
-   - vulnerability handling
-
-5. execution_score:
-   - roadmap specificity
-   - shipped product evidence
-   - repository activity
-   - website/app completeness
-   - delivery credibility
-
-6. token_utility_score:
-   - token utility clarity
-   - token necessity
-   - supply/emission logic
-   - value capture
-   - alignment with protocol usage
-
-Return ONLY this JSON shape:
+Return ONLY this JSON:
 {{
   "technical_score": <integer 0-100>,
   "team_score": <integer 0-100>,
@@ -456,52 +679,24 @@ Return ONLY this JSON shape:
   "strengths": ["short strength 1", "short strength 2"],
   "weaknesses": ["short weakness 1", "short weakness 2"],
   "recommendations": ["short recommendation 1", "short recommendation 2"]
-}}
-"""
+}}"""
 
-        def leader_fn():
-            response = gl.nondet.exec_prompt(prompt)
-            parsed = self._safe_json_loads(response, self._default_score_payload())
-            return self._normalize_score_payload(parsed)
+        result = gl.eq_principle.prompt_non_comparative(
+            prompt,
+            lambda output: isinstance(self._safe_json_loads(output, None), dict)
+                and "technical_score" in self._safe_json_loads(output, {})
+        )
 
-        def validator_fn(leader_result) -> bool:
-            if not isinstance(leader_result, gl.vm.Return):
-                return False
+        parsed = self._safe_json_loads(result, self._default_score_payload())
+        return self._normalize_score_payload(parsed)
 
-            leader_data = self._normalize_score_payload(leader_result.calldata)
-            validator_data = leader_fn()
-
-            return self._scores_close_enough(leader_data, validator_data)
-
-        result = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
-        return self._normalize_score_payload(result)
-
-    def _scores_close_enough(self, leader_data: dict, validator_data: dict) -> bool:
-        keys = [
-            "technical_score",
-            "team_score",
-            "market_fit_score",
-            "security_score",
-            "execution_score",
-            "token_utility_score",
-        ]
-
-        tolerance = 15
-
-        for key in keys:
-            leader_score = self._bounded_score(leader_data.get(key, 50))
-            validator_score = self._bounded_score(validator_data.get(key, 50))
-
-            # If either validator thinks a category is extremely weak,
-            # do not allow tolerance to hide a rejection-level score.
-            if leader_score <= 10 or validator_score <= 10:
-                if abs(leader_score - validator_score) > 5:
-                    return False
-            else:
-                if abs(leader_score - validator_score) > tolerance:
-                    return False
-
-        return True
+    def _build_web_evidence_summary(self, web_evidence: dict) -> str:
+        lines = []
+        for key, value in web_evidence.items():
+            status = "accessible" if not str(value).startswith(("fetch_failed", "no_url", "empty")) else str(value)[:60]
+            preview = str(value)[:200] if status == "accessible" else ""
+            lines.append(f"[{key}] {status} — {preview}")
+        return "\n".join(lines) if lines else "No web evidence fetched."
 
     def _default_score_payload(self) -> dict:
         return {

@@ -78,6 +78,30 @@ export interface EvaluationScores {
   overall_score: number;
 }
 
+export type FactCheckVerdict =
+  | 'verified'
+  | 'partially_verified'
+  | 'unverified'
+  | 'disputed'
+  | 'not_checkable'
+  | 'fetch_failed';
+
+export interface FactCheckReport {
+  website_live: FactCheckVerdict;
+  website_matches_description: FactCheckVerdict;
+  team_verifiable: FactCheckVerdict;
+  audit_reports_accessible: FactCheckVerdict;
+  bug_bounty_active: FactCheckVerdict;
+  github_repos_active: FactCheckVerdict;
+  github_recent_commits: FactCheckVerdict;
+  partnerships_mentioned_online: FactCheckVerdict;
+  investors_mentioned_online: FactCheckVerdict;
+  overall_credibility: 'high' | 'medium' | 'low' | 'very_low';
+  red_flags: string[];
+  verified_highlights: string[];
+  fact_check_summary: string;
+}
+
 export interface Evaluation extends EvaluationScores {
   evaluation_id: string;
   project_id: string;
@@ -86,6 +110,8 @@ export interface Evaluation extends EvaluationScores {
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
+  fact_check_report?: FactCheckReport;
+  web_evidence_urls?: Record<string, string | string[]>;
   evaluation_hash?: string;
   tx_hash?: string;
   evaluated_at: string;
