@@ -50,7 +50,7 @@ export default function RankingsPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects…"
             className="w-full pl-8 pr-3 py-2.5 rounded-lg text-sm"
-            style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.12)', color: 'var(--foreground)', outline: 'none' }}
+            style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.12)', color: '#f5eeff', outline: 'none' }}
           />
         </div>
 
