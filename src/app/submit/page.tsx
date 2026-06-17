@@ -10,7 +10,7 @@ export default function SubmitPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>
           Submit Your Project
         </h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>

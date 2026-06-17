@@ -66,7 +66,7 @@ export default function LandingPage() {
 
         <h1
           className="text-4xl sm:text-6xl font-black tracking-tight mb-5 leading-tight"
-          style={{ color: '#f5eeff' }}
+          style={{ color: 'var(--foreground)' }}
         >
           Crypto project rankings
           <br />
@@ -116,7 +116,7 @@ export default function LandingPage() {
       {/* ── Problem ─────────────────────────────────────── */}
       <section className="px-4 py-16 max-w-5xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#f5eeff' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             The problem with crypto research
           </h2>
           <p style={{ color: '#6b5490' }}>Existing systems are broken by design.</p>
@@ -143,7 +143,7 @@ export default function LandingPage() {
       {/* ── Flow ──────────────────────────────────────────── */}
       <section className="px-4 py-16 max-w-5xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#f5eeff' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             How AlphaRank works
           </h2>
           <p style={{ color: '#6b5490' }}>Every step is verifiable on-chain.</p>
@@ -170,7 +170,7 @@ export default function LandingPage() {
                 {s.n}
               </span>
               <div>
-                <div className="font-semibold text-sm mb-0.5" style={{ color: '#f5eeff' }}>{s.label}</div>
+                <div className="font-semibold text-sm mb-0.5" style={{ color: 'var(--foreground)' }}>{s.label}</div>
                 <div className="text-xs" style={{ color: '#9b86b8' }}>{s.desc}</div>
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function LandingPage() {
       {/* ── Dimensions ─────────────────────────────────── */}
       <section className="px-4 py-16 max-w-5xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#f5eeff' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             6 AI evaluation dimensions
           </h2>
           <p style={{ color: '#6b5490' }}>Weighted scoring across what actually matters.</p>
@@ -211,7 +211,7 @@ export default function LandingPage() {
       {/* ── Tiers ─────────────────────────────────────── */}
       <section className="px-4 py-16 max-w-5xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#f5eeff' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
             Ranking Tiers
           </h2>
           <p style={{ color: '#6b5490' }}>On-chain assignment. Permanent and verifiable.</p>
@@ -248,7 +248,7 @@ export default function LandingPage() {
             boxShadow: '0 0 48px rgba(168,85,247,0.08)',
           }}
         >
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#f5eeff' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
             Build verifiable on-chain reputation
           </h2>
           <p className="mb-8" style={{ color: '#9b86b8' }}>

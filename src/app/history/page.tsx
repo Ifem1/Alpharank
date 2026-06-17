@@ -37,7 +37,7 @@ export default function HistoryPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>Score History</h1>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Score History</h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           Historical evaluation records — append-only, stored immutably on GenLayer.
         </p>
@@ -53,7 +53,7 @@ export default function HistoryPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search projects…"
                 className="w-full px-3 py-2 rounded-lg text-xs"
-                style={{ background: 'rgba(230,190,247,0.05)', border: '1px solid rgba(230,190,247,0.1)', color: '#f5eeff', outline: 'none' }}
+                style={{ background: 'rgba(230,190,247,0.05)', border: '1px solid rgba(230,190,247,0.1)', color: 'var(--foreground)', outline: 'none' }}
               />
             </div>
             <div className="max-h-80 overflow-y-auto">
@@ -98,7 +98,7 @@ export default function HistoryPage() {
             ) : (
               <>
                 {selectedProject && (
-                  <h2 className="font-semibold text-sm mb-4" style={{ color: '#f5eeff' }}>
+                  <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--foreground)' }}>
                     {selectedProject.project_name} — Score History
                   </h2>
                 )}

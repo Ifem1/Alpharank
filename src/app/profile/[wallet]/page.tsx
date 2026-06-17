@@ -76,7 +76,7 @@ export default async function ProfilePage({ params }: Props) {
             {wallet.slice(2, 4).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-xl font-black font-mono mb-1" style={{ color: '#f5eeff' }}>
+            <h1 className="text-xl font-black font-mono mb-1" style={{ color: 'var(--foreground)' }}>
               {formatAddress(wallet)}
             </h1>
             <p className="text-sm" style={{ color: '#6b5490' }}>
@@ -142,7 +142,7 @@ export default async function ProfilePage({ params }: Props) {
         style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}
       >
         <div className="px-6 py-4" style={{ borderBottom: '1px solid rgba(230,190,247,0.06)' }}>
-          <h2 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>Projects</h2>
+          <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Projects</h2>
         </div>
         {projects.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm" style={{ color: '#6b5490' }}>
@@ -160,7 +160,7 @@ export default async function ProfilePage({ params }: Props) {
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium" style={{ color: '#f5eeff' }}>{p.name}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{p.name}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: '#6b5490' }}>
                     {p.category} · {formatDate(p.created_at)}
                   </p>

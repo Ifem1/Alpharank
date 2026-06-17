@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>Analytics</h1>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Analytics</h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           Platform statistics derived from GenLayer on-chain state.
         </p>
@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
           className="rounded-xl p-6"
           style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}
         >
-          <h2 className="font-semibold text-sm mb-5" style={{ color: '#f5eeff' }}>Tier Distribution</h2>
+          <h2 className="font-semibold text-sm mb-5" style={{ color: 'var(--foreground)' }}>Tier Distribution</h2>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={tierChartData} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="tier" tick={{ fill: '#6b5490', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#6b5490', fontSize: 10 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.14)', borderRadius: '8px', color: '#f5eeff', fontSize: 12 }}
+                  contentStyle={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.14)', borderRadius: '8px', color: 'var(--foreground)', fontSize: 12 }}
                   cursor={{ fill: 'rgba(230,190,247,0.05)' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
           className="rounded-xl p-6"
           style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}
         >
-          <h2 className="font-semibold text-sm mb-5" style={{ color: '#f5eeff' }}>Category Breakdown</h2>
+          <h2 className="font-semibold text-sm mb-5" style={{ color: 'var(--foreground)' }}>Category Breakdown</h2>
           <div className="space-y-3">
             {catChartData.length === 0 ? (
               <p className="text-sm" style={{ color: '#6b5490' }}>No data yet.</p>
@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
           className="rounded-xl p-6"
           style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}
         >
-          <h2 className="font-semibold text-sm mb-5" style={{ color: '#f5eeff' }}>Top Ranked Projects</h2>
+          <h2 className="font-semibold text-sm mb-5" style={{ color: 'var(--foreground)' }}>Top Ranked Projects</h2>
           <LeaderboardTable entries={entries.slice(0, 10)} />
         </div>
       )}

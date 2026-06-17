@@ -18,7 +18,7 @@ export default function NotFound() {
           404
         </div>
 
-        <h2 className="text-2xl font-bold mb-3" style={{ color: '#f5eeff' }}>
+        <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--foreground)' }}>
           Page Not Found
         </h2>
         <p className="text-sm mb-8 leading-relaxed" style={{ color: '#9b86b8' }}>

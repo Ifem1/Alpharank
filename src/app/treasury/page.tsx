@@ -43,7 +43,7 @@ export default async function TreasuryPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>Protocol Treasury</h1>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Protocol Treasury</h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           All protocol fees are stored and managed by the GenLayer Intelligent Contract on-chain.
         </p>
@@ -53,7 +53,7 @@ export default async function TreasuryPage() {
 
       {/* Fee structure breakdown */}
       <div style={PANEL}>
-        <h2 className="font-semibold text-sm mb-4" style={{ color: '#f5eeff' }}>Fee Structure</h2>
+        <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--foreground)' }}>Fee Structure</h2>
         <div className="space-y-3">
           {[
             { label: 'Initial Evaluation',   value: `${treasury.evaluation_fee} GEN`,   desc: 'Paid when submitting project for first evaluation' },

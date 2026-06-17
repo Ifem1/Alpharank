@@ -91,7 +91,7 @@ export default async function ProjectPage({ params }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 className="text-3xl font-black" style={{ color: '#f5eeff' }}>{project.name}</h1>
+            <h1 className="text-3xl font-black" style={{ color: 'var(--foreground)' }}>{project.name}</h1>
             {evaluation && <TierBadge tier={evaluation.tier} size="lg" />}
             {evaluation && (
               <span className="text-2xl font-black font-mono"
@@ -128,7 +128,7 @@ export default async function ProjectPage({ params }: Props) {
 
           {/* About */}
           <div style={PANEL}>
-            <h2 className="font-semibold text-sm mb-3" style={{ color: '#f5eeff' }}>About</h2>
+            <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--foreground)' }}>About</h2>
             <p className="text-sm leading-relaxed" style={{ color: '#9b86b8' }}>{project.description}</p>
           </div>
 
@@ -155,7 +155,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Score history */}
           {history.length > 0 && (
             <div style={PANEL}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: '#f5eeff' }}>Score History</h2>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--foreground)' }}>Score History</h2>
               <HistoricalChart history={history} />
             </div>
           )}
@@ -163,7 +163,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Technical Evidence */}
           {(project.whitepaper_url || project.docs_url || project.github_repos?.length > 0) && (
             <div style={PANEL} className="space-y-4">
-              <h2 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>Technical Evidence</h2>
+              <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Technical Evidence</h2>
 
               {project.whitepaper_url && (
                 <div>
@@ -204,7 +204,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Security */}
           {(project.audits?.length > 0 || project.bug_bounty_url) && (
             <div style={PANEL} className="space-y-3">
-              <h2 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>Security</h2>
+              <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Security</h2>
 
               {project.audits?.map((audit, i) => (
                 <div key={i}
@@ -237,7 +237,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Roadmap */}
           {project.roadmap && (
             <div style={PANEL}>
-              <h2 className="font-semibold text-sm mb-3" style={{ color: '#f5eeff' }}>Roadmap</h2>
+              <h2 className="font-semibold text-sm mb-3" style={{ color: 'var(--foreground)' }}>Roadmap</h2>
               <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: '#9b86b8' }}>
                 {project.roadmap}
               </p>
@@ -254,7 +254,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Tokenomics */}
           {project.tokenomics && Object.values(project.tokenomics).some(Boolean) && (
             <div style={PANEL} className="space-y-2.5">
-              <h3 className="font-semibold text-sm mb-1" style={{ color: '#f5eeff' }}>Tokenomics</h3>
+              <h3 className="font-semibold text-sm mb-1" style={{ color: 'var(--foreground)' }}>Tokenomics</h3>
               {project.tokenomics.token_symbol && (
                 <div className="flex justify-between text-sm">
                   <span style={{ color: '#6b5490' }}>Symbol</span>
@@ -285,7 +285,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Team */}
           {project.team?.length > 0 && (
             <div style={PANEL}>
-              <h3 className="font-semibold text-sm mb-3" style={{ color: '#f5eeff' }}>Team</h3>
+              <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--foreground)' }}>Team</h3>
               <div className="space-y-3">
                 {project.team.map((member, i) => (
                   <div key={i} className="flex items-center justify-between">
@@ -338,7 +338,7 @@ export default async function ProjectPage({ params }: Props) {
           {/* Evidence hash */}
           {project.evidence_hash && (
             <div style={PANEL}>
-              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: '#f5eeff' }}>
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                 <span>🔒</span> Evidence Hash
               </h3>
               <code className="text-[11px] font-mono break-all block leading-relaxed" style={{ color: '#4ade80' }}>

@@ -34,7 +34,7 @@ export default function RankingsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>Global Rankings</h1>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Global Rankings</h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           Derived from GenLayer Intelligent Contract state · Scores are immutable once finalized.
         </p>
@@ -50,7 +50,7 @@ export default function RankingsPage() {
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects…"
             className="w-full pl-8 pr-3 py-2.5 rounded-lg text-sm"
-            style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.12)', color: '#f5eeff', outline: 'none' }}
+            style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.12)', color: 'var(--foreground)', outline: 'none' }}
           />
         </div>
 

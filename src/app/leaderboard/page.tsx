@@ -23,7 +23,7 @@ export default function LeaderboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-black mb-2" style={{ color: '#f5eeff' }}>Leaderboard</h1>
+        <h1 className="text-3xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Leaderboard</h1>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           Category rankings sourced from GenLayer on-chain state.
         </p>

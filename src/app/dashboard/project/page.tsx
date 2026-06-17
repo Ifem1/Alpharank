@@ -129,7 +129,7 @@ function DashboardProjectInner() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 className="text-2xl font-black" style={{ color: '#f5eeff' }}>{project.name}</h1>
+            <h1 className="text-2xl font-black" style={{ color: 'var(--foreground)' }}>{project.name}</h1>
             {evaluation && <TierBadge tier={evaluation.tier} size="lg" />}
             {evaluation && (
               <span
@@ -198,7 +198,7 @@ function DashboardProjectInner() {
           {/* Score history */}
           {history.length > 0 && (
             <div className="rounded-xl p-5" style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}>
-              <h2 className="font-semibold text-sm mb-4" style={{ color: '#f5eeff' }}>Score History</h2>
+              <h2 className="font-semibold text-sm mb-4" style={{ color: 'var(--foreground)' }}>Score History</h2>
               <HistoricalChart history={history} />
             </div>
           )}
@@ -206,7 +206,7 @@ function DashboardProjectInner() {
           {/* Strengths / Weaknesses / Recommendations */}
           {evaluation && (evaluation.strengths.length > 0 || evaluation.recommendations.length > 0) && (
             <div className="rounded-xl p-5 space-y-5" style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}>
-              <h2 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>AI Analysis</h2>
+              <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>AI Analysis</h2>
               {evaluation.strengths.length > 0 && (
                 <div>
                   <h3 className="text-xs font-semibold mb-2 uppercase tracking-wider" style={{ color: '#4ade80' }}>Strengths</h3>
@@ -259,7 +259,7 @@ function DashboardProjectInner() {
 
           {/* Project metadata */}
           <div className="rounded-xl p-5 space-y-3" style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}>
-            <h3 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>Project Info</h3>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Project Info</h3>
             <div className="space-y-2 text-sm">
               {project.website && (
                 <div className="flex justify-between">

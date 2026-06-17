@@ -13,7 +13,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         >
           ⚠
         </div>
-        <h2 className="text-xl font-bold" style={{ color: '#f5eeff' }}>Something went wrong</h2>
+        <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Something went wrong</h2>
         <p className="text-sm" style={{ color: '#9b86b8' }}>
           {error.message || 'An unexpected error occurred. Please try again.'}
         </p>

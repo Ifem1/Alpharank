@@ -80,7 +80,7 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-black" style={{ color: '#f5eeff' }}>Dashboard</h1>
+        <h1 className="text-3xl font-black" style={{ color: 'var(--foreground)' }}>Dashboard</h1>
         <Link
           href="/submit"
           className="font-semibold px-5 py-2.5 rounded-lg text-sm transition-all"
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         style={{ background: '#0e0a1a', border: '1px solid rgba(230,190,247,0.08)' }}>
         <div className="px-6 py-4 flex items-center justify-between"
           style={{ borderBottom: '1px solid rgba(230,190,247,0.07)' }}>
-          <h2 className="font-semibold text-sm" style={{ color: '#f5eeff' }}>Your Projects</h2>
+          <h2 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>Your Projects</h2>
           <div className="flex items-center gap-3">
             {projects.length > 0 && (
               <button
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                     <Link
                       href={`/project/${row.project_id}`}
                       className="font-medium text-sm transition-colors"
-                      style={{ color: '#f5eeff' }}
+                      style={{ color: 'var(--foreground)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.color = '#e6bef7')}
                       onMouseLeave={(e) => (e.currentTarget.style.color = '#f5eeff')}
                     >
@@ -254,7 +254,7 @@ function ProjectLookup() {
           style={{
             background: '#160f29',
             border: '1px solid rgba(230,190,247,0.1)',
-            color: '#f5eeff',
+            color: 'var(--foreground)',
             outline: 'none',
           }}
         />
