@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/providers';
 import { Navbar } from '@/components/Navbar';
 import { NetworkChecker } from '@/components/NetworkChecker';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
@@ -49,12 +50,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-gray-950 text-gray-100">
+      <body className="min-h-full flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <NetworkChecker />
+          <ThemeProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <NetworkChecker />
+          </ThemeProvider>
         </Providers>
       </body>
     </html>
@@ -65,7 +68,7 @@ function Footer() {
   return (
     <footer
       className="mt-auto py-8 px-4"
-      style={{ borderTop: '1px solid rgba(230,190,247,0.06)' }}
+      style={{ borderTop: '1px solid var(--nav-border)' }}
     >
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
@@ -75,18 +78,18 @@ function Footer() {
           >
             α
           </div>
-          <span className="text-xs font-semibold" style={{ color: '#6b5490' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--muted-2)' }}>
             AlphaRank
           </span>
-          <span className="text-xs" style={{ color: '#3d2a6b' }}>
+          <span className="text-xs" style={{ color: 'var(--muted-2)' }}>
             · Powered by GenLayer
           </span>
         </div>
-        <div className="flex items-center gap-6 text-xs" style={{ color: '#6b5490' }}>
-          <a href="/rankings"    className="hover:text-[#e6bef7] transition-colors">Rankings</a>
-          <a href="/leaderboard" className="hover:text-[#e6bef7] transition-colors">Leaderboard</a>
-          <a href="/analytics"   className="hover:text-[#e6bef7] transition-colors">Analytics</a>
-          <a href="/treasury"    className="hover:text-[#e6bef7] transition-colors">Treasury</a>
+        <div className="flex items-center gap-6 text-xs" style={{ color: 'var(--muted-2)' }}>
+          <a href="/rankings"    className="transition-colors hover:opacity-80">Rankings</a>
+          <a href="/leaderboard" className="transition-colors hover:opacity-80">Leaderboard</a>
+          <a href="/analytics"   className="transition-colors hover:opacity-80">Analytics</a>
+          <a href="/treasury"    className="transition-colors hover:opacity-80">Treasury</a>
         </div>
       </div>
     </footer>

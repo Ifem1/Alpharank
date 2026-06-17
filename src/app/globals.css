@@ -1,32 +1,63 @@
 @import "tailwindcss";
 
-/* ─── AlphaRank Design Tokens ─────────────────────────────── */
+/* ─── AlphaRank Design Tokens — Dark (default) ────────────── */
 :root {
-  --background:    #07040f;   /* near-black with purple tint */
-  --surface:       #0e0a1a;   /* card/panel background */
-  --surface-2:     #160f29;   /* elevated surface */
-  --border:        #2a1d45;   /* subtle border */
-  --border-2:      #3d2a6b;   /* hover/active border */
-  --foreground:    #f5eeff;   /* primary text */
-  --muted:         #9b86b8;   /* secondary text */
-  --muted-2:       #6b5490;   /* tertiary text */
+  --background:    #07040f;
+  --surface:       #0e0a1a;
+  --surface-2:     #160f29;
+  --border:        #2a1d45;
+  --border-2:      #3d2a6b;
+  --foreground:    #f5eeff;
+  --muted:         #9b86b8;
+  --muted-2:       #6b5490;
 
-  /* Brand — built around #e6bef7 */
-  --brand:         #e6bef7;   /* primary lavender */
-  --brand-dim:     #c084fc;   /* medium purple */
-  --brand-deep:    #a855f7;   /* deep purple */
+  --brand:         #e6bef7;
+  --brand-dim:     #c084fc;
+  --brand-deep:    #a855f7;
   --brand-bg:      rgba(230, 190, 247, 0.08);
   --brand-border:  rgba(230, 190, 247, 0.18);
 
-  /* Score tier colours */
-  --tier-sp:  #fbbf24;   /* S+ gold */
-  --tier-s:   #e6bef7;   /* S  lavender (brand) */
-  --tier-a:   #a78bfa;   /* A  violet */
-  --tier-b:   #34d399;   /* B  emerald */
-  --tier-c:   #22d3ee;   /* C  cyan */
-  --tier-d:   #fb923c;   /* D  orange */
-  --tier-f:   #f87171;   /* F  red */
+  --nav-bg:        rgba(14, 10, 26, 0.97);
+  --nav-border:    rgba(230, 190, 247, 0.08);
+
+  --tier-sp:  #fbbf24;
+  --tier-s:   #e6bef7;
+  --tier-a:   #a78bfa;
+  --tier-b:   #34d399;
+  --tier-c:   #22d3ee;
+  --tier-d:   #fb923c;
+  --tier-f:   #f87171;
 }
+
+/* ─── Light Theme Overrides ───────────────────────────────── */
+[data-theme="light"] {
+  --background:    #f3eeff;
+  --surface:       #ffffff;
+  --surface-2:     #ede6ff;
+  --border:        #d4c3f0;
+  --border-2:      #b89ee0;
+  --foreground:    #120a2e;
+  --muted:         #5c4a8a;
+  --muted-2:       #9b86b8;
+
+  --brand:         #7c3aed;
+  --brand-dim:     #9333ea;
+  --brand-deep:    #6d28d9;
+  --brand-bg:      rgba(124, 58, 237, 0.08);
+  --brand-border:  rgba(124, 58, 237, 0.20);
+
+  --nav-bg:        rgba(243, 238, 255, 0.97);
+  --nav-border:    rgba(124, 58, 237, 0.12);
+}
+
+[data-theme="light"] ::selection {
+  background-color: rgba(124, 58, 237, 0.18);
+  color: #120a2e;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track { background: #ede6ff; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #b89ee0; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
 @theme inline {
   --color-background: var(--background);
