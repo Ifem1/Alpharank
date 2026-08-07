@@ -50,7 +50,7 @@ function buildProof(
   ];
   return {
     project_id: project.project_id,
-    contract_address: process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0x36De06c17912d1e2DEDc90CaFEC48A811820B647',
+    contract_address: process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0xf9Aceaec58B177B586c7EEf4D883D337b689BD26',
     evidence_hash: project.evidence_hash,
     evaluation_hash: evaluation?.evaluation_hash,
     steps,

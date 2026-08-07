@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `[PENDING REDEPLOYMENT — see below]` (GenLayer StudioNet)  
+**Contract:** `0xf9Aceaec58B177B586c7EEf4D883D337b689BD26` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
