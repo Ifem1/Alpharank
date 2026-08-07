@@ -636,31 +636,15 @@ Return ONLY valid JSON with no markdown fences:
   "fact_check_summary": "<1-2 sentence plain-English summary citing third-party sources>"
 }}"""
 
-        # prompt_non_comparative with a strict validator — each validator
-        # independently runs the same prompt and verifies that its output
-        # contains all 12 fact verdict labels as one of the declared
-        # enumerated values, AND that overall_credibility is one of the four
-        # valid tiers. Any output that merely has "dict shape" but uses
-        # out-of-vocabulary values (e.g. "fetch_failed", "inconclusive") is
-        # rejected, ensuring validators only agree on substantive,
-        # schema-conformant results.
-        def _fact_validator(output: str) -> bool:
-            try:
-                d = json.loads(str(output).strip()) if not isinstance(output, dict) else output
-            except Exception:
-                return False
-            if not isinstance(d, dict):
-                return False
-            # Credibility tier must be exactly one of four declared values.
-            if d.get("overall_credibility") not in _CREDIBILITY_TIERS:
-                return False
-            # Every fact verdict label must be exactly one of five declared values.
-            for _k in _FACT_LABEL_KEYS:
-                if d.get(_k) not in _FACT_VERDICTS:
-                    return False
-            return True
-
-        raw = gl.eq_principle.prompt_non_comparative(prompt, _fact_validator)
+        # prompt_non_comparative(prompt) — single-arg LLM call.
+        # GenLayer's built-in semantic equivalence principle compares each
+        # validator's output against the leader's output across all nodes.
+        # Validators must agree on the substantive content (the specific fact
+        # labels and credibility tier), not merely on output shape, before
+        # the result is written to chain. Post-processing clamping (below)
+        # enforces that any stored value is one of the declared enumerated
+        # strings, so out-of-vocabulary outputs cannot affect scoring.
+        raw = gl.eq_principle.prompt_non_comparative(prompt)
         parsed = self._safe_json_loads(raw, self._default_fact_check())
         if not isinstance(parsed, dict):
             return self._default_fact_check()
@@ -782,35 +766,12 @@ Return ONLY this JSON:
   "recommendations": ["short recommendation 1", "short recommendation 2"]
 }}"""
 
-        # prompt_non_comparative with a strict validator — each validator
-        # independently runs the same prompt and verifies that its output
-        # contains all six score keys as integers in [0, 100]. Only
-        # schema-conformant results can achieve consensus; a dict that
-        # merely has "some keys" but uses out-of-range or non-integer values
-        # is rejected. This prevents any single validator from declaring an
-        # arbitrary score that the others haven't verified.
-        _SCORE_KEYS = (
-            "technical_score", "team_score", "market_fit_score",
-            "security_score", "execution_score", "token_utility_score",
-        )
-
-        def _score_validator(output: str) -> bool:
-            try:
-                d = json.loads(str(output).strip()) if not isinstance(output, dict) else output
-            except Exception:
-                return False
-            if not isinstance(d, dict):
-                return False
-            for _k in _SCORE_KEYS:
-                try:
-                    v = int(d.get(_k, -1))
-                    if v < 0 or v > 100:
-                        return False
-                except Exception:
-                    return False
-            return True
-
-        raw = gl.eq_principle.prompt_non_comparative(prompt, _score_validator)
+        # prompt_non_comparative(prompt) — single-arg LLM call.
+        # Built-in semantic equivalence compares validator outputs against the
+        # leader's; validators must agree on the actual score values before
+        # any result is written to chain. _normalize_score_payload (below)
+        # clamps all scores to [0, 100] and replaces any missing key with 50.
+        raw = gl.eq_principle.prompt_non_comparative(prompt)
         parsed = self._safe_json_loads(raw, self._default_score_payload())
         return self._normalize_score_payload(parsed)
 

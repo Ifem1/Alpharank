@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x175c87A1A7d971C6f36dE85811Fead868DE7E44D` (GenLayer StudioNet)  
+**Contract:** `0x1A9b16d8d11F73964ed96b348101382904c10360` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -52,14 +52,14 @@ The contract fetches live content from every project-submitted URL plus independ
 queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(prompt, _fact_validator)
+raw = gl.eq_principle.prompt_non_comparative(prompt)
 ```
 
-`_fact_validator(output)` rejects any output that does not contain all 12 fact verdict
-labels as one of the five declared enumerated values, AND `overall_credibility` as one
-of the four declared tier values. Any dict that merely has "dict shape" but uses
-out-of-vocabulary values (e.g. `"fetch_failed"`, `"inconclusive"`) is rejected, so
-only schema-conformant outputs can achieve consensus. The equivalence principle requires
+GenLayer's built-in semantic equivalence compares each validator's output against the
+leader's across all nodes. Validators must agree on the substantive content (the specific
+fact labels and credibility tier) before the result is written to chain. Post-processing
+clamping enforces that any stored value is one of the declared enumerated strings, so
+out-of-vocabulary outputs cannot affect scoring. The equivalence principle requires
 validators to agree on:
 
 - The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
@@ -78,11 +78,12 @@ six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution
 Token Utility 10%) via:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(prompt, _score_validator)
+raw = gl.eq_principle.prompt_non_comparative(prompt)
 ```
 
-`_score_validator(output)` rejects any output where a score key is missing, non-integer,
-or out of `[0, 100]`. Only schema-conformant scoring outputs can achieve consensus.
+Built-in semantic equivalence compares validator outputs against the leader's. Validators
+must agree on the actual score values before any result is written to chain.
+`_normalize_score_payload` clamps all scores to `[0, 100]` after consensus.
 The equivalence principle requires validators to agree on the
 **10-point band** each score falls in — not the exact integer. This avoids the
 float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
@@ -119,10 +120,10 @@ User browser
                                │    gl.get_webpage(CoinGecko, DeFiLlama, GitHub)
                                │
                                ├─ _fact_check_claims()
-                               │    prompt_comparative → 12 labels + credibility tier
+                               │    prompt_non_comparative → 12 labels + credibility tier
                                │
                                └─ _evaluate_all_scores()
-                                    prompt_comparative → 6 scores in 10-pt bands
+                                    prompt_non_comparative → 6 scores in 10-pt bands
                                     → tier, evidence hash written to chain
 
 Read path (instant):
@@ -165,7 +166,7 @@ results are labelled as provisional until `FINALIZED`.
 
 - **Source:** [`contracts/AlphaRank.py`](contracts/AlphaRank.py)
 - **Network:** GenLayer StudioNet (gasless)
-- **Equivalence principles:** `prompt_comparative` for both fact-check and scoring rounds
+- **Equivalence principles:** `prompt_non_comparative` for both fact-check and scoring rounds
 - **Runner:** `py-genlayer:1zr6nqk597d97kg0dyxg0shhrykx5v02zjgnyrajapy4wlqvfvwh`
 
 The contract address is updated in `src/lib/genlayer.ts` and `.env` after each
