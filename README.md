@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x5f5769627B35155E126A552901178a15406CDe4A` (GenLayer StudioNet)  
+**Contract:** `0x175c87A1A7d971C6f36dE85811Fead868DE7E44D` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -52,12 +52,15 @@ The contract fetches live content from every project-submitted URL plus independ
 queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
 
 ```python
-raw = gl.eq_principle.prompt_comparative(prompt, _fact_cmp)
+raw = gl.eq_principle.prompt_non_comparative(prompt, _fact_validator)
 ```
 
-`_fact_cmp(a, b)` is a two-argument comparator that parses both validator outputs
-and returns `True` only when every fact verdict label and the credibility tier match
-exactly. The equivalence principle requires validators to agree on:
+`_fact_validator(output)` rejects any output that does not contain all 12 fact verdict
+labels as one of the five declared enumerated values, AND `overall_credibility` as one
+of the four declared tier values. Any dict that merely has "dict shape" but uses
+out-of-vocabulary values (e.g. `"fetch_failed"`, `"inconclusive"`) is rejected, so
+only schema-conformant outputs can achieve consensus. The equivalence principle requires
+validators to agree on:
 
 - The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
 - Every one of **twelve fact verdict labels** — each exactly one of
@@ -75,11 +78,11 @@ six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution
 Token Utility 10%) via:
 
 ```python
-raw = gl.eq_principle.prompt_comparative(prompt, _score_cmp)
+raw = gl.eq_principle.prompt_non_comparative(prompt, _score_validator)
 ```
 
-`_score_cmp(a, b)` is a two-argument comparator that parses both outputs and returns
-`True` only when all six score dimensions fall in the same 10-point band.
+`_score_validator(output)` rejects any output where a score key is missing, non-integer,
+or out of `[0, 100]`. Only schema-conformant scoring outputs can achieve consensus.
 The equivalence principle requires validators to agree on the
 **10-point band** each score falls in — not the exact integer. This avoids the
 float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
