@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x1A9b16d8d11F73964ed96b348101382904c10360` (GenLayer StudioNet)  
+**Contract:** `0x473E3A26f5dd17782cEC0648c45B694b2B1455ed` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -52,15 +52,14 @@ The contract fetches live content from every project-submitted URL plus independ
 queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(prompt)
+raw = gl.eq_principle.prompt_non_comparative(task=prompt, criteria=_FACT_CHECK_EQ_PRINCIPLE)
 ```
 
-GenLayer's built-in semantic equivalence compares each validator's output against the
-leader's across all nodes. Validators must agree on the substantive content (the specific
-fact labels and credibility tier) before the result is written to chain. Post-processing
-clamping enforces that any stored value is one of the declared enumerated strings, so
-out-of-vocabulary outputs cannot affect scoring. The equivalence principle requires
-validators to agree on:
+`_FACT_CHECK_EQ_PRINCIPLE` is a string that GenLayer's built-in LLM comparator uses
+to decide if leader and validator outputs are equivalent. It requires agreement on all
+12 fact verdict labels AND the credibility tier — validators cannot agree on outputs
+that merely share a dict shape but differ in substantive labels. The equivalence
+principle requires validators to agree on:
 
 - The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
 - Every one of **twelve fact verdict labels** — each exactly one of
@@ -78,13 +77,13 @@ six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution
 Token Utility 10%) via:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(prompt)
+raw = gl.eq_principle.prompt_non_comparative(task=prompt, criteria=_SCORE_EQ_PRINCIPLE)
 ```
 
-Built-in semantic equivalence compares validator outputs against the leader's. Validators
-must agree on the actual score values before any result is written to chain.
-`_normalize_score_payload` clamps all scores to `[0, 100]` after consensus.
-The equivalence principle requires validators to agree on the
+`_SCORE_EQ_PRINCIPLE` tells the built-in LLM comparator to accept outputs as equivalent
+when all six scores fall in the same 10-point band. `_normalize_score_payload` clamps
+all scores to `[0, 100]` after consensus. The equivalence principle requires validators
+to agree on the
 **10-point band** each score falls in — not the exact integer. This avoids the
 float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
 evaluation conclusion is identical.

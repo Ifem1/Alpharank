@@ -636,15 +636,16 @@ Return ONLY valid JSON with no markdown fences:
   "fact_check_summary": "<1-2 sentence plain-English summary citing third-party sources>"
 }}"""
 
-        # prompt_non_comparative(prompt) — single-arg LLM call.
-        # GenLayer's built-in semantic equivalence principle compares each
-        # validator's output against the leader's output across all nodes.
-        # Validators must agree on the substantive content (the specific fact
-        # labels and credibility tier), not merely on output shape, before
-        # the result is written to chain. Post-processing clamping (below)
-        # enforces that any stored value is one of the declared enumerated
-        # strings, so out-of-vocabulary outputs cannot affect scoring.
-        raw = gl.eq_principle.prompt_non_comparative(prompt)
+        # prompt_non_comparative(task, criteria) — LLM call with an explicit
+        # equivalence criteria string. GenLayer's built-in LLM comparator uses
+        # the criteria to decide if leader and validator outputs are equivalent.
+        # _FACT_CHECK_EQ_PRINCIPLE requires agreement on all 12 fact verdict
+        # labels AND the credibility tier — validators cannot agree on outputs
+        # that merely share a dict shape but differ in substantive labels.
+        raw = gl.eq_principle.prompt_non_comparative(
+            task=prompt,
+            criteria=_FACT_CHECK_EQ_PRINCIPLE,
+        )
         parsed = self._safe_json_loads(raw, self._default_fact_check())
         if not isinstance(parsed, dict):
             return self._default_fact_check()
@@ -766,12 +767,14 @@ Return ONLY this JSON:
   "recommendations": ["short recommendation 1", "short recommendation 2"]
 }}"""
 
-        # prompt_non_comparative(prompt) — single-arg LLM call.
-        # Built-in semantic equivalence compares validator outputs against the
-        # leader's; validators must agree on the actual score values before
-        # any result is written to chain. _normalize_score_payload (below)
-        # clamps all scores to [0, 100] and replaces any missing key with 50.
-        raw = gl.eq_principle.prompt_non_comparative(prompt)
+        # prompt_non_comparative(task, criteria) — LLM call with explicit
+        # equivalence criteria. _SCORE_EQ_PRINCIPLE requires validators to
+        # agree on 10-point score bands for all six dimensions, avoiding
+        # UNDETERMINED from floating-point rounding disagreements.
+        raw = gl.eq_principle.prompt_non_comparative(
+            task=prompt,
+            criteria=_SCORE_EQ_PRINCIPLE,
+        )
         parsed = self._safe_json_loads(raw, self._default_score_payload())
         return self._normalize_score_payload(parsed)
 
