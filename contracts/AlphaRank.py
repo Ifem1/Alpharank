@@ -642,8 +642,8 @@ Return ONLY valid JSON with no markdown fences:
         # fact labels and credibility tier, not merely on output shape.
         def _fact_cmp(a: str, b: str) -> bool:
             try:
-                da = self._safe_json_loads(a, None)
-                db = self._safe_json_loads(b, None)
+                da = json.loads(str(a).strip()) if not isinstance(a, dict) else a
+                db = json.loads(str(b).strip()) if not isinstance(b, dict) else b
             except Exception:
                 return False
             if not isinstance(da, dict) or not isinstance(db, dict):
@@ -788,8 +788,8 @@ Return ONLY this JSON:
 
         def _score_cmp(a: str, b: str) -> bool:
             try:
-                da = self._safe_json_loads(a, None)
-                db = self._safe_json_loads(b, None)
+                da = json.loads(str(a).strip()) if not isinstance(a, dict) else a
+                db = json.loads(str(b).strip()) if not isinstance(b, dict) else b
             except Exception:
                 return False
             if not isinstance(da, dict) or not isinstance(db, dict):
