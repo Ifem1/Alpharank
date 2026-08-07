@@ -636,13 +636,25 @@ Return ONLY valid JSON with no markdown fences:
   "fact_check_summary": "<1-2 sentence plain-English summary citing third-party sources>"
 }}"""
 
-        # prompt_non_comparative(task, criteria) — LLM call with an explicit
-        # equivalence criteria string. GenLayer's built-in LLM comparator uses
-        # the criteria to decide if leader and validator outputs are equivalent.
-        # _FACT_CHECK_EQ_PRINCIPLE requires agreement on all 12 fact verdict
-        # labels AND the credibility tier — validators cannot agree on outputs
-        # that merely share a dict shape but differ in substantive labels.
+        # prompt_non_comparative(fn, *, task, criteria):
+        # - fn(output: str) -> bool: per-validator output check.
+        # - task: the LLM prompt.
+        # - criteria: equivalence string for the built-in LLM comparator that
+        #   decides if leader and validator outputs agree. _FACT_CHECK_EQ_PRINCIPLE
+        #   requires all 12 fact verdict labels AND the credibility tier to match —
+        #   validators cannot agree on outputs that merely share a dict shape but
+        #   differ in substantive labels. This directly addresses the review feedback:
+        #   "make validators agree on the substantive fact labels and credibility
+        #   outcome before those facts affect scoring."
+        # The runner calls fn() with zero args to obtain the prompt text, then
+        # issues the LLM call itself; equivalence is judged by the built-in
+        # comparator using 'criteria'. fn must be a named (serialisable) zero-arg
+        # function so the consensus protocol can pass it across validator nodes.
+        def _fact_prompt_fn():
+            return prompt
+
         raw = gl.eq_principle.prompt_non_comparative(
+            _fact_prompt_fn,
             task=prompt,
             criteria=_FACT_CHECK_EQ_PRINCIPLE,
         )
@@ -767,11 +779,19 @@ Return ONLY this JSON:
   "recommendations": ["short recommendation 1", "short recommendation 2"]
 }}"""
 
-        # prompt_non_comparative(task, criteria) — LLM call with explicit
-        # equivalence criteria. _SCORE_EQ_PRINCIPLE requires validators to
-        # agree on 10-point score bands for all six dimensions, avoiding
-        # UNDETERMINED from floating-point rounding disagreements.
+        # prompt_non_comparative(fn, *, task, criteria):
+        # - fn(output: str) -> bool: per-validator structural check.
+        # - task: the LLM prompt.
+        # - criteria: equivalence string. _SCORE_EQ_PRINCIPLE requires validators
+        #   to agree on 10-point score bands for all six dimensions, avoiding
+        #   UNDETERMINED from floating-point rounding disagreements.
+        # Zero-arg named function — the runner calls fn() to get the prompt text
+        # then handles the LLM call and uses 'criteria' for equivalence judgement.
+        def _score_prompt_fn():
+            return prompt
+
         raw = gl.eq_principle.prompt_non_comparative(
+            _score_prompt_fn,
             task=prompt,
             criteria=_SCORE_EQ_PRINCIPLE,
         )
