@@ -1,111 +1,237 @@
 # AlphaRank
 
-AI-powered crypto intelligence platform built on [GenLayer](https://genlayer.com). AlphaRank evaluates and ranks crypto projects using on-chain AI smart contracts with live web fact-checking, delivering objective, tamper-proof scores directly on the blockchain.
+AI-powered crypto project intelligence built on [GenLayer](https://genlayer.com).
+AlphaRank evaluates and ranks crypto projects using on-chain AI smart contracts that
+fetch live web evidence and reach tamper-proof consensus — no backend makes the
+decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x36De06c17912d1e2DEDc90CaFEC48A811820B647` (GenLayer Testnet)
+**Contract:** `[PENDING REDEPLOYMENT — see below]` (GenLayer StudioNet)  
+**Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
 
-## Features
+## What it does
 
-- On-chain AI evaluation of crypto projects via GenLayer intelligent contracts
-- **Live web fact-checking** — contract fetches and verifies project URLs at evaluation time
-- **Third-party intelligence** — independently queries CoinGecko, DeFiLlama, and GitHub to cross-check claims
-- **Decentralised AI consensus** via GenLayer's Equivalence Principle — multiple validator nodes agree on every score before it's written on-chain
-- Real-time scoring with async polling for evaluation results
-- Dashboard with project rankings, tier badges, and detailed analysis
-- Wallet-connected submissions and immutable evidence locking
+A project submits its website, whitepaper, GitHub repos, audit reports, and team
+information. AlphaRank's intelligent contract independently fetches every submitted URL
+from inside the consensus round, cross-checks claims against CoinGecko, DeFiLlama, and
+GitHub search, then runs a multi-validator AI scoring round. The resulting score is
+written to the chain only after a quorum of validators agrees — not because the app
+owner says so.
 
-## How Evaluation Works
+**One sentence:** Submit your crypto project, and an on-chain AI that cannot be bribed
+gives it an objective, verifiable score.
 
-1. **Project submits** — website, whitepaper, GitHub repos, audit reports, team, tokenomics
-2. **Evidence is locked** — a SHA-256 hash of all submitted data is stored on-chain; nothing can be changed after this point
-3. **Contract fetches live web data** — hits every submitted URL directly from within the intelligent contract
-4. **Third-party fact-checking** — independently searches CoinGecko, DeFiLlama, and GitHub for the project; not relying on self-reported data
-5. **AI scores via Equivalence Principle** — multiple GenLayer validators each run the evaluation prompt independently; only a consensus result is accepted
-6. **Score written on-chain** — immutable, verifiable, not controlled by any backend
+---
 
-### Scoring Categories
+## Why GenLayer and not a backend
 
-| Category | Weight | What it measures |
+Delete GenLayer. What breaks?
+
+Without GenLayer, a single party (the app operator) decides every score. Operators
+can favour paying customers, suppress competitors, or simply be wrong without recourse.
+Every counterparty — investors, token buyers, ecosystem partners — must trust the
+operator blindly.
+
+With GenLayer, the scoring prompt runs independently on multiple validator nodes. Only
+a quorum result is written on-chain. The operator cannot alter a score after submission,
+and the evidence the contract fetched is recorded on-chain alongside the result. A regex
+or a price feed cannot answer "is this team credible?" or "does this whitepaper match
+what the website says?" — that requires judgement, and judgement requires consensus.
+
+---
+
+## How consensus is used
+
+`run_evaluation` contains two non-deterministic rounds:
+
+### Round 1 — Fact-check (`_fact_check_claims`)
+
+The contract fetches live content from every project-submitted URL plus independent
+queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
+
+```python
+def leader():
+    return gl.exec_prompt(prompt)
+
+raw = gl.eq_principle.prompt_comparative(leader, _FACT_CHECK_EQ_PRINCIPLE)
+```
+
+The equivalence principle (`_FACT_CHECK_EQ_PRINCIPLE`) requires validators to agree on:
+
+- The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
+- Every one of **twelve fact verdict labels** — each exactly one of
+  `"verified"`, `"partially_verified"`, `"unverified"`, `"disputed"`, `"not_checkable"`
+
+Differences in prose (red flags wording, summary sentences) do not affect equivalence.
+Only the enumerated labels are compared. This prevents a single leader from deciding
+a "low credibility" verdict that triggers the 60-point scoring cap without validator
+agreement.
+
+### Round 2 — Scoring (`_evaluate_all_scores`)
+
+Using the fact-check result and web evidence summary as grounding, the contract scores
+six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution 10%,
+Token Utility 10%) via:
+
+```python
+def leader():
+    return gl.exec_prompt(prompt)
+
+raw = gl.eq_principle.prompt_comparative(leader, _SCORE_EQ_PRINCIPLE)
+```
+
+The equivalence principle (`_SCORE_EQ_PRINCIPLE`) requires validators to agree on the
+**10-point band** each score falls in — not the exact integer. This avoids the
+float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
+evaluation conclusion is identical.
+
+### What is deliberately deterministic
+
+Everything outside those two LLM calls is deterministic:
+
+- Access control (`assert project["owner"] == sender`)
+- Evidence hashing (SHA-256 of submitted data)
+- Score arithmetic and weighted average
+- Tier assignment thresholds (S+ ≥ 95, S ≥ 90, …)
+- Credibility cap logic (low/very_low → overall score ≤ 60)
+- Storage reads and writes
+
+Keeping these deterministic means validators cannot diverge on the structural logic —
+only on the inherently semantic judgements where divergence is meaningful.
+
+---
+
+## Architecture and data flow
+
+```
+User browser
+  │
+  ├─ create_project()  ──► GenLayer write (deterministic, ~30 s)
+  ├─ lock_project_data() ► GenLayer write (deterministic, ~30 s)
+  ├─ submit_evaluation() ► GenLayer write (deterministic, ~30 s)
+  └─ run_evaluation()  ──► GenLayer write (2 nondet rounds, ~4–7 min)
+                               │
+                               ├─ _fetch_web_evidence()
+                               │    gl.get_webpage(project URLs)
+                               │    gl.get_webpage(CoinGecko, DeFiLlama, GitHub)
+                               │
+                               ├─ _fact_check_claims()
+                               │    prompt_comparative → 12 labels + credibility tier
+                               │
+                               └─ _evaluate_all_scores()
+                                    prompt_comparative → 6 scores in 10-pt bands
+                                    → tier, evidence hash written to chain
+
+Read path (instant):
+  Browser → /api/* route (CORS proxy only) → genlayer-js readContract → StudioNet RPC
+```
+
+**Supabase** is a read-cache for fast project indexing and notification delivery. It
+stores no scores and makes no decisions — those exist only on GenLayer. If Supabase is
+empty or unreachable, the app falls back to `localStorage` for projects the user
+created in this browser and reads evaluations directly from GenLayer via the
+`/api/evaluate` route.
+
+---
+
+## Wallet model
+
+| Mode | When | How |
 |---|---|---|
-| Technical | 25% | Architecture, docs, GitHub activity |
-| Team | 20% | Verifiable credentials, online presence |
-| Market Fit | 20% | Problem clarity, traction, aggregator listings |
-| Security | 15% | Audit accessibility, bug bounty, open source |
-| Execution | 10% | Shipped product evidence, roadmap specificity |
-| Token Utility | 10% | Token necessity, supply logic, value capture |
+| Injected wallet (MetaMask, Rabby) | `window.ethereum` detected | `createClient({ chain: studionet, account: walletAddress, provider: window.ethereum })` |
+| Generated wallet | No injected wallet | Private key in `localStorage`; key can be exported/imported; clear warning shown before use |
 
-### Fact-Check Report
+Reads and writes always use the same address. The active address is shown in the navbar.
+StudioNet is gasless — no faucet needed, `0 GEN` balance is expected.
 
-Every evaluation includes a `fact_check_report` with verdicts on:
-- `website_live` — is the site actually reachable?
-- `audit_reports_accessible` — can the audit URLs be fetched?
-- `github_repos_active` — real commit activity via GitHub API?
-- `listed_on_coingecko` — independently verified on CoinGecko
-- `listed_on_defillama` — independently verified on DeFiLlama
-- `independent_github_presence` — community forks/mentions found via GitHub search
-- `overall_credibility` — `high / medium / low / very_low`
+---
 
-Projects with `low` or `very_low` credibility are capped at a score of 60.
+## Transaction lifecycle
 
-## Tech Stack
+The UI surfaces every consensus stage in real time:
 
-- **Frontend:** Next.js, TypeScript, Tailwind CSS
-- **Blockchain:** GenLayer (intelligent contracts with web access)
-- **Database:** Supabase
-- **Deployment:** Vercel
+`PENDING → PROPOSING → COMMITTING → REVEALING → ACCEPTED → FINALIZED`
 
-## Getting Started
+`UNDETERMINED` (validators could not agree) is shown as a retryable outcome, not an
+error. `VALIDATORS_TIMEOUT` and `LEADER_TIMEOUT` get the same treatment. `ACCEPTED`
+results are labelled as provisional until `FINALIZED`.
 
-Install dependencies:
+---
+
+## Smart contract
+
+- **Source:** [`contracts/AlphaRank.py`](contracts/AlphaRank.py)
+- **Network:** GenLayer StudioNet (gasless)
+- **Equivalence principles:** `prompt_comparative` for both fact-check and scoring rounds
+- **Runner:** `py-genlayer:1zr6nqk597d97kg0dyxg0shhrykx5v02zjgnyrajapy4wlqvfvwh`
+
+The contract address is updated in `src/lib/genlayer.ts` and `.env` after each
+deployment. The current address is in `NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS`.
+
+---
+
+## Setup
 
 ```bash
 npm install
-```
-
-Run the development server:
-
-```bash
+cp .env.example .env.local   # fill in values below
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in your values:
-
-```bash
-cp .env.example .env.local
-```
-
-Key variables:
+Environment variables:
 
 ```
-NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=0x36De06c17912d1e2DEDc90CaFEC48A811820B647
+NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS=<deployed contract address>
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=<your supabase url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your supabase anon key>
+SUPABASE_SERVICE_ROLE_KEY=<your service role key>
+NEXT_PUBLIC_APP_URL=https://alpharank-brown.vercel.app
 ```
 
-See `DEPLOYMENT.md` for the full list.
-
-## Deployment
-
-The app is deployed on Vercel: [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)
-
-For self-hosting instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
-
-## Smart Contract
-
-- **Address:** `0x36De06c17912d1e2DEDc90CaFEC48A811820B647`
-- **Network:** GenLayer Testnet
-- **Source:** [`contracts/AlphaRank.py`](contracts/AlphaRank.py)
-
-The contract uses `gl.get_webpage()` for live URL fetching and `gl.eq_principle.prompt_non_comparative()` for decentralised AI consensus. See [CONTRACT_GUIDE.md](CONTRACT_GUIDE.md) for the full ABI and state machine.
+---
 
 ## Testing
 
-See [TESTING.md](TESTING.md) for the testing guide.
+See [TESTING.md](TESTING.md). Run:
+
+```bash
+PYTHONIOENCODING=utf-8 genvm-lint check contracts/AlphaRank.py --json
+```
+
+Lint result: `{"ok":true,"validate":{"methods":20,"view_methods":10,"write_methods":10}}`
+
+---
+
+## Honest limits
+
+- **StudioNet balances are simulated** — GEN value flows are demonstrated but not
+  proven at the EVM level.
+- **`UNDETERMINED` happens** — when validators cannot reach quorum, nothing is written
+  and the transaction must be retried. The UI offers a retry button.
+- **Evaluation takes 4–7 minutes** — two nondet rounds × multiple web fetches. The UI
+  shows an elapsed timer and the current consensus stage.
+- **Supabase dependency** — the project list in the dashboard is populated from a cache.
+  Projects submitted in a different browser session may not appear until the cache is
+  warmed.
+- **Third-party fetch variability** — CoinGecko and GitHub rate-limit unauthenticated
+  requests; the contract gracefully maps failed fetches to `"not_checkable"` rather than
+  `"unverified"`, so a rate-limited fetch does not unfairly penalise a project.
+
+---
+
+## Deployment
+
+Deployed on Vercel: [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)
+
+For contract redeployment after source changes:
+
+```bash
+genlayer network set studionet
+genlayer deploy --contract contracts/AlphaRank.py
+# update NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS in Vercel env vars + .env.local
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full Vercel setup guide.

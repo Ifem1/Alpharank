@@ -121,6 +121,8 @@ export async function glSubmitAndWait(
       client.waitForTransactionReceipt({
         hash: txHash as `0x${string}` & { length: 66 },
         status: TransactionStatus.FINALIZED,
+        interval: 5000,   // poll every 5 s — consensus rounds take 2–5 min
+        retries: 90,      // 90 × 5 s = 7.5 min max before outer timeout wins
       }),
       timeoutP,
     ]);
