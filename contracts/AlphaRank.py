@@ -636,13 +636,28 @@ Return ONLY valid JSON with no markdown fences:
   "fact_check_summary": "<1-2 sentence plain-English summary citing third-party sources>"
 }}"""
 
-        # Use prompt_comparative so every validator independently re-runs the
-        # leader and the equivalence principle enforces agreement on each fact
-        # label and the credibility tier — not merely on output shape.
-        def leader():
-            return gl.exec_prompt(prompt)
+        # prompt_comparative(prompt, comparator) — validators each run the
+        # prompt independently, then the comparator decides whether two
+        # outputs are equivalent. This enforces agreement on the substantive
+        # fact labels and credibility tier, not merely on output shape.
+        def _fact_cmp(a: str, b: str) -> bool:
+            try:
+                da = self._safe_json_loads(a, None)
+                db = self._safe_json_loads(b, None)
+            except Exception:
+                return False
+            if not isinstance(da, dict) or not isinstance(db, dict):
+                return False
+            # Credibility tier must match exactly — it gates the 60-pt cap.
+            if da.get("overall_credibility") != db.get("overall_credibility"):
+                return False
+            # Every fact verdict label must match exactly.
+            for _k in _FACT_LABEL_KEYS:
+                if da.get(_k) != db.get(_k):
+                    return False
+            return True
 
-        raw = gl.eq_principle.prompt_comparative(leader, _FACT_CHECK_EQ_PRINCIPLE)
+        raw = gl.eq_principle.prompt_comparative(prompt, _fact_cmp)
         parsed = self._safe_json_loads(raw, self._default_fact_check())
         if not isinstance(parsed, dict):
             return self._default_fact_check()
@@ -764,13 +779,31 @@ Return ONLY this JSON:
   "recommendations": ["short recommendation 1", "short recommendation 2"]
 }}"""
 
-        # Use prompt_comparative so validators must agree on 10-point score
-        # bands across all six dimensions, not merely that the output is a
-        # dict with a "technical_score" key.
-        def leader():
-            return gl.exec_prompt(prompt)
+        # prompt_comparative(prompt, comparator) — validators agree on
+        # 10-point score bands across all six dimensions.
+        _SCORE_KEYS = (
+            "technical_score", "team_score", "market_fit_score",
+            "security_score", "execution_score", "token_utility_score",
+        )
 
-        raw = gl.eq_principle.prompt_comparative(leader, _SCORE_EQ_PRINCIPLE)
+        def _score_cmp(a: str, b: str) -> bool:
+            try:
+                da = self._safe_json_loads(a, None)
+                db = self._safe_json_loads(b, None)
+            except Exception:
+                return False
+            if not isinstance(da, dict) or not isinstance(db, dict):
+                return False
+            for _k in _SCORE_KEYS:
+                try:
+                    # Band to 10-pt buckets — 72 and 73 are equivalent, 69 and 70 are not
+                    if int(da.get(_k, -1)) // 10 != int(db.get(_k, -1)) // 10:
+                        return False
+                except Exception:
+                    return False
+            return True
+
+        raw = gl.eq_principle.prompt_comparative(prompt, _score_cmp)
         parsed = self._safe_json_loads(raw, self._default_score_payload())
         return self._normalize_score_payload(parsed)
 

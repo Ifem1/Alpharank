@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0xf9Aceaec58B177B586c7EEf4D883D337b689BD26` (GenLayer StudioNet)  
+**Contract:** `0x6B0Da005b4538f7F9B78Ad8876eDfd0996c00346` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -52,13 +52,12 @@ The contract fetches live content from every project-submitted URL plus independ
 queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
 
 ```python
-def leader():
-    return gl.exec_prompt(prompt)
-
-raw = gl.eq_principle.prompt_comparative(leader, _FACT_CHECK_EQ_PRINCIPLE)
+raw = gl.eq_principle.prompt_comparative(prompt, _fact_cmp)
 ```
 
-The equivalence principle (`_FACT_CHECK_EQ_PRINCIPLE`) requires validators to agree on:
+`_fact_cmp(a, b)` is a two-argument comparator that parses both validator outputs
+and returns `True` only when every fact verdict label and the credibility tier match
+exactly. The equivalence principle requires validators to agree on:
 
 - The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
 - Every one of **twelve fact verdict labels** — each exactly one of
@@ -76,13 +75,12 @@ six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution
 Token Utility 10%) via:
 
 ```python
-def leader():
-    return gl.exec_prompt(prompt)
-
-raw = gl.eq_principle.prompt_comparative(leader, _SCORE_EQ_PRINCIPLE)
+raw = gl.eq_principle.prompt_comparative(prompt, _score_cmp)
 ```
 
-The equivalence principle (`_SCORE_EQ_PRINCIPLE`) requires validators to agree on the
+`_score_cmp(a, b)` is a two-argument comparator that parses both outputs and returns
+`True` only when all six score dimensions fall in the same 10-point band.
+The equivalence principle requires validators to agree on the
 **10-point band** each score falls in — not the exact integer. This avoids the
 float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
 evaluation conclusion is identical.
