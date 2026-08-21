@@ -130,8 +130,8 @@ User Browser
     │
     ├── GenLayer Intelligent Contract (AlphaRank.py)
     │       ├── Stores all project state
-    │       ├── Runs AI evaluation via gl.eq_principle.prompt_non_comparative()
-    │       ├── Validators reach consensus on evaluation results
+    │       ├── Runs AI evaluation via gl.vm.run_nondet_unsafe()
+    │       ├── Validators independently reproduce labels/scores before consensus
     │       ├── Stores scores, tiers, rankings on-chain
     │       └── Maintains append-only historical score ledger
     │

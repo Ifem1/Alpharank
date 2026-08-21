@@ -60,16 +60,13 @@ Signals evaluation start. Status → `evaluating`.
 
 ### `run_evaluation(project_id: str)`
 
-Runs all 5 AI evaluation agents via `gl.eq_principle.prompt_non_comparative()`.
-Validators reach consensus. Stores evaluation on-chain.
+Runs web-grounded fact classification and scoring via `gl.vm.run_nondet_unsafe()`.
+Validators independently reproduce the leader's labels and scores, then compare
+the substantive fields before any evaluation is stored on-chain.
 
-**Agents:**
-1. `_evaluate_technical_quality()` — 25% weight
-2. `_evaluate_team_quality()` — 20% weight
-3. `_evaluate_market_fit()` — 20% weight
-4. `_evaluate_security()` — 15% weight
-5. `_evaluate_token_utility()` — 10% weight
-6. `_evaluate_execution()` — 10% weight
+**Consensus rounds:**
+1. `_fact_check_claims()` - 12 fact labels plus `overall_credibility`
+2. `_evaluate_all_scores()` - six weighted score dimensions plus confidence
 
 **Returns:** `evaluation_id: str`
 
@@ -224,20 +221,22 @@ archived
 
 ## GenLayer Evaluation Pattern
 
-All 5 evaluation agents use `gl.eq_principle.prompt_non_comparative()`:
+Both AI rounds use explicit leader/validator functions:
 
 ```python
-result = gl.eq_principle.prompt_non_comparative(
-    prompt,
-    lambda output: self._validate_score_output(output)
-)
+result = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 ```
 
-The validator function ensures the output is valid JSON with a `score` field in [0, 100].
+The leader calls `gl.nondet.exec_prompt(..., response_format="json")`. Each validator
+reruns the same prompt independently and compares its own result with the leader result.
+Fact consensus requires all 12 fact labels and `overall_credibility` to match exactly.
+Score consensus requires all six dimensions to fall in the same 10-point band and
+confidence to be within 10 points. Prose fields do not determine consensus.
 
 This guarantees:
 - AI evaluation happens on-chain via GenLayer validators
 - Multiple validators reach consensus using the Equivalence Principle
+- A leader with materially different labels or score bands can be rejected
 - No backend route can fake or substitute evaluation results
 - Scores are immutable once finalized
 

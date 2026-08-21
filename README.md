@@ -52,23 +52,21 @@ The contract fetches live content from every project-submitted URL plus independ
 queries to CoinGecko, DeFiLlama, and GitHub. It then calls:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(task=prompt, criteria=_FACT_CHECK_EQ_PRINCIPLE)
+fact_check = gl.vm.run_nondet_unsafe(_leader_fact_check, _validator_fact_check)
 ```
 
-`_FACT_CHECK_EQ_PRINCIPLE` is a string that GenLayer's built-in LLM comparator uses
-to decide if leader and validator outputs are equivalent. It requires agreement on all
-12 fact verdict labels AND the credibility tier — validators cannot agree on outputs
-that merely share a dict shape but differ in substantive labels. The equivalence
-principle requires validators to agree on:
+The leader calls `gl.nondet.exec_prompt(..., response_format="json")` and returns
+the 12 fact verdict labels plus `overall_credibility`. Each validator calls the same
+leader function independently against the same evidence, producing its own second
+fact result. `_fact_checks_equivalent` then compares only:
 
 - The **overall credibility tier** — exactly one of `"high"`, `"medium"`, `"low"`, `"very_low"`
 - Every one of **twelve fact verdict labels** — each exactly one of
   `"verified"`, `"partially_verified"`, `"unverified"`, `"disputed"`, `"not_checkable"`
 
-Differences in prose (red flags wording, summary sentences) do not affect equivalence.
-Only the enumerated labels are compared. This prevents a single leader from deciding
-a "low credibility" verdict that triggers the 60-point scoring cap without validator
-agreement.
+Differences in prose (red flags wording, highlights, summary sentences) do not affect
+equivalence. If any substantive label or the credibility tier differs, the validator
+returns `False`, so a materially different leader fact result cannot feed scoring.
 
 ### Round 2 — Scoring (`_evaluate_all_scores`)
 
@@ -77,16 +75,15 @@ six dimensions (Technical 25%, Team 20%, Market Fit 20%, Security 15%, Execution
 Token Utility 10%) via:
 
 ```python
-raw = gl.eq_principle.prompt_non_comparative(task=prompt, criteria=_SCORE_EQ_PRINCIPLE)
+scores = gl.vm.run_nondet_unsafe(_leader_scores, _validator_scores)
 ```
 
-`_SCORE_EQ_PRINCIPLE` tells the built-in LLM comparator to accept outputs as equivalent
-when all six scores fall in the same 10-point band. `_normalize_score_payload` clamps
-all scores to `[0, 100]` after consensus. The equivalence principle requires validators
-to agree on the
-**10-point band** each score falls in — not the exact integer. This avoids the
-float-disagreement trap where `72` and `73` cause `UNDETERMINED` even though the
-evaluation conclusion is identical.
+The leader independently produces all six scores, confidence, and prose lists. Each
+validator independently scores the same evidence and fact-check result. `_scores_equivalent`
+accepts only when all six score dimensions land in the same deterministic 10-point
+band (`0-9`, `10-19`, ... `90-100`) and confidence differs by no more than 10 points.
+For example, `84` and `82` agree; `84` and `62` reject. Strengths, weaknesses, and
+recommendation wording are normalized for storage but are not consensus fields.
 
 ### What is deliberately deterministic
 
@@ -96,7 +93,7 @@ Everything outside those two LLM calls is deterministic:
 - Evidence hashing (SHA-256 of submitted data)
 - Score arithmetic and weighted average
 - Tier assignment thresholds (S+ ≥ 95, S ≥ 90, …)
-- Credibility cap logic (low/very_low → overall score ≤ 60)
+- Credibility cap logic after weighted arithmetic (`low`/`very_low` -> overall score <= 60)
 - Storage reads and writes
 
 Keeping these deterministic means validators cannot diverge on the structural logic —
@@ -119,10 +116,10 @@ User browser
                                │    gl.get_webpage(CoinGecko, DeFiLlama, GitHub)
                                │
                                ├─ _fact_check_claims()
-                               │    prompt_non_comparative → 12 labels + credibility tier
+                               │    run_nondet_unsafe → leader labels compared with validator labels
                                │
                                └─ _evaluate_all_scores()
-                                    prompt_non_comparative → 6 scores in 10-pt bands
+                                    run_nondet_unsafe → leader scores compared with validator scores
                                     → tier, evidence hash written to chain
 
 Read path (instant):
@@ -165,8 +162,8 @@ results are labelled as provisional until `FINALIZED`.
 
 - **Source:** [`contracts/AlphaRank.py`](contracts/AlphaRank.py)
 - **Network:** GenLayer StudioNet (gasless)
-- **Equivalence principles:** `prompt_non_comparative` for both fact-check and scoring rounds
-- **Runner:** `py-genlayer:1zr6nqk597d97kg0dyxg0shhrykx5v02zjgnyrajapy4wlqvfvwh`
+- **Consensus primitive:** `gl.vm.run_nondet_unsafe` with explicit leader and validator functions
+- **Runner:** `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`
 
 The contract address is updated in `src/lib/genlayer.ts` and `.env` after each
 deployment. The current address is in `NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS`.

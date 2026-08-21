@@ -93,6 +93,23 @@ Expect all routes to compile successfully.
 
 ## Contract Unit Tests
 
+Run the adversarial consensus regression tests:
+
+```bash
+python -m unittest tests.test_consensus_rules
+```
+
+These tests cover:
+
+- Same fact labels with different prose -> accept
+- Different fact label -> reject
+- Different credibility tier -> reject
+- Scores in the same accepted 10-point band -> accept
+- Materially different score bands -> reject
+- Malicious/wrong leader fact result versus independently derived validator result -> reject
+- Malicious/wrong leader score result versus independently derived validator result -> reject
+- `very_low`/`low` credibility cap boundary: a raw score above 60 is capped to 60
+
 Test the GenLayer contract directly:
 
 ```python
