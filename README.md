@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x3F7D43d3db911eCC2fDE6bcB35e627Fe77cc5550` (GenLayer StudioNet)  
+**Contract:** `0x5186ecACDD82b8F8193367121448d5EA12554205` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -164,6 +164,9 @@ results are labelled as provisional until `FINALIZED`.
 - **Network:** GenLayer StudioNet (gasless)
 - **Consensus primitive:** `gl.vm.run_nondet_unsafe` with explicit leader and validator functions
 - **Runner:** `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`
+- **Source hash:** `3DB38F429EA9198D87A81E1FA0580E7D824CB949531D0540F53D8932B2BE94F9`
+- **Deployment tx:** `0x2c92c4b73126b6f5e19beec413f3761efb7fd82713967fbe2244950c056927a0`
+- **Consensus smoke tx:** `0x00480803c845c8b80106a237bdf92ecb1ab53f2080fffdfb488742a2dceee7ef`
 
 The contract address is updated in `src/lib/genlayer.ts` and `.env` after each
 deployment. The current address is in `NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS`.

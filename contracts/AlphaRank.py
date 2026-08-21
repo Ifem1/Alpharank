@@ -583,6 +583,19 @@ For EVERY verdict field you MUST use exactly one of these five labels:
   "verified", "partially_verified", "unverified", "disputed", "not_checkable"
 Do NOT invent any other label (e.g. "fetch_failed", "inconclusive", "unknown").
 
+Use this deterministic label rubric:
+- "verified": accessible evidence directly supports the claim.
+- "partially_verified": accessible evidence supports part, but not all, of the claim.
+- "unverified": accessible relevant evidence exists, but does not support the claim.
+- "disputed": accessible relevant evidence contradicts the claim.
+- "not_checkable": no URL/data was provided, fetching failed, returned empty content,
+  or the available evidence is not relevant enough to check the claim.
+
+If the project provides no team, audit, investor, partnership, bug bounty, or GitHub
+claim, use "not_checkable" for that field. Do not mark absent claims as "unverified".
+If CoinGecko, DeFiLlama, or GitHub search fetches fail or are empty, use "not_checkable"
+for the corresponding third-party field.
+
 For overall_credibility use exactly one of:
   "high", "medium", "low", "very_low"
 
@@ -726,6 +739,9 @@ Score each category 0-100. Weight verified and third-party evidence heavily. Pen
 If red flags exist, reduce affected scores proportionally.
 If overall_credibility is "low" or "very_low", cap overall score at 60.
 Being listed on CoinGecko or DeFiLlama is strong positive evidence; boost market_fit_score and execution_score accordingly.
+Confidence measures confidence in the evaluation given the evidence, not project quality.
+Use these confidence bands: high credibility 80-95, medium 60-79, low 35-55, very_low 20-30.
+For very_low credibility with mostly not_checkable fact labels, keep all six dimension scores in the 0-9 band unless accessible evidence supports a higher score.
 
 1. technical_score — architecture, innovation, docs completeness, repo activity (verified)
 2. team_score — team verifiability online, credentials, transparency
