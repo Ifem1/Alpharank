@@ -15,7 +15,7 @@ import {
   updatePendingEvalStage, STAGE_LABEL,
   type EvalStage,
 } from '@/lib/pending-tx';
-import type { Project, Evaluation, FactCheckReport, FactCheckVerdict } from '@/types';
+import type { Project, Evaluation } from '@/types';
 
 interface EvaluationPanelProps {
   project: Project;
@@ -321,7 +321,7 @@ export function EvaluationPanel({ project, evaluation: initialEvaluation, onEval
           {stage === 'stalled' && (
             <div className="rounded-lg p-3 text-xs"
               style={{ background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', color: '#fbbf24' }}>
-              GenLayer validation can take up to 5 minutes. Click "Refresh Status" to check again.
+              GenLayer validation can take up to 5 minutes. Click &quot;Refresh Status&quot; to check again.
               A timeout is NOT a failure — your transaction was submitted successfully.
             </div>
           )}

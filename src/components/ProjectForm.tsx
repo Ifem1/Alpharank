@@ -56,6 +56,7 @@ const inputCls = 'w-full px-3 py-2.5 placeholder-[#3d2a6b]';
 interface ProjectFormProps { uploadedFileNames?: string[]; }
 
 export function ProjectForm({ uploadedFileNames = [] }: ProjectFormProps) {
+  void uploadedFileNames;
   // ── ALL hooks at top — no conditional returns before this block ──
   const { address, isConnected } = useAccount();
   const router = useRouter();

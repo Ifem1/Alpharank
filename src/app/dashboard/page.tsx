@@ -271,7 +271,7 @@ function ProjectLookup() {
         </Link>
       </div>
       <p className="text-[11px] mt-2" style={{ color: '#3d2a6b' }}>
-        If you submitted a project but it's not listed above, paste its ID here to view it directly.
+        If you submitted a project but it&apos;s not listed above, paste its ID here to view it directly.
       </p>
     </div>
   );

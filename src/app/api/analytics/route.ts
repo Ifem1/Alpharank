@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getTotalProjects, getTotalEvaluations, getLeaderboard } from '@/lib/genlayer';
-import { RANK_TIERS, CATEGORIES } from '@/constants';
 import type { RankTier, ProjectCategory } from '@/types';
 
 export async function GET() {

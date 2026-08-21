@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { RANK_TIERS, CATEGORIES, TIER_HEX } from '@/constants';
-import { cn, getScoreColor } from '@/utils';
 import type { LeaderboardEntry } from '@/types';
 
 interface Analytics {

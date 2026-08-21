@@ -1,4 +1,6 @@
-export default {};
+const emptyModule = {};
+
+export default emptyModule;
 export const getItem = () => Promise.resolve(null);
 export const setItem = () => Promise.resolve();
 export const removeItem = () => Promise.resolve();

@@ -1,4 +1,4 @@
-import { cn, getScoreHex, getScoreColor, formatScore } from '@/utils';
+import { cn, getScoreHex } from '@/utils';
 
 interface ScoreCardProps {
   label: string;
