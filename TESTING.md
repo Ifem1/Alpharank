@@ -104,11 +104,28 @@ These tests cover:
 - Same fact labels with different prose -> accept
 - Different fact label -> reject
 - Different credibility tier -> reject
+- Leader fact payload missing a required label -> reject
+- Validator fact payload missing a required label -> reject
+- Invalid fact verdict or credibility tier -> reject
+- Malformed leader or validator fact JSON cannot default into a valid consensus result
 - Scores in the same accepted 10-point band -> accept
+- Score band boundary: `80`/`89` accepts, `79`/`80` rejects
 - Materially different score bands -> reject
 - Malicious/wrong leader fact result versus independently derived validator result -> reject
 - Malicious/wrong leader score result versus independently derived validator result -> reject
-- `very_low`/`low` credibility cap boundary: a raw score above 60 is capped to 60
+- Missing, non-numeric, below-0, above-100, or missing-confidence score payloads -> reject
+- Validator callback-path harnesses for fact disagreement, score disagreement, and same-band score agreement
+- `very_low`/`low` credibility cap boundaries:
+  - raw 95 + `very_low` -> 60
+  - raw 73 + `low` -> 60
+  - raw 55 + `low` -> 55
+  - raw 95 + `medium` -> 95
+
+The callback-path tests use a local `gl.vm.Return` stub because the GenLayer runner
+does not provide a deterministic way to inject different LLM payloads into live
+leader and validator nodes. They exercise the same validator acceptance helpers used
+inside the contract's `run_nondet_unsafe` callbacks, while live StudioNet receipts
+remain the proof for real validator execution.
 
 Test the GenLayer contract directly:
 

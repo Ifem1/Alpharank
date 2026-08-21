@@ -29,6 +29,15 @@ _FACT_LABEL_KEYS: tuple = (
     "listed_on_defillama",
     "independent_github_presence",
 )
+_SCORE_KEYS: tuple = (
+    "technical_score",
+    "team_score",
+    "market_fit_score",
+    "security_score",
+    "execution_score",
+    "token_utility_score",
+)
+_SCORE_CONFIDENCE_TOLERANCE = 10
 
 class AlphaRank(gl.Contract):
     owner: str
@@ -627,9 +636,10 @@ Return ONLY valid JSON with no markdown fences:
             if not isinstance(leader_result, gl.vm.Return):
                 return False
             validator_result = _leader_fact_check()
-            return self._fact_checks_equivalent(leader_result.calldata, validator_result)
+            return self._fact_validator_accepts(leader_result, validator_result)
 
         raw = gl.vm.run_nondet_unsafe(_leader_fact_check, _validator_fact_check)
+        assert self._is_valid_fact_consensus_payload(raw), "Malformed fact consensus result"
         return self._normalize_fact_check_payload(raw)
 
     def _normalize_fact_check_payload(self, data) -> dict:
@@ -652,7 +662,25 @@ Return ONLY valid JSON with no markdown fences:
         )
         return normalized
 
+    def _is_valid_fact_consensus_payload(self, data) -> bool:
+        parsed = data if isinstance(data, dict) else self._try_parse_json_object(data)
+        if not isinstance(parsed, dict):
+            return False
+        for key in _FACT_LABEL_KEYS:
+            if key not in parsed or parsed.get(key) not in _FACT_VERDICTS:
+                return False
+        return parsed.get("overall_credibility") in _CREDIBILITY_TIERS
+
+    def _fact_validator_accepts(self, leader_result, validator_result: dict) -> bool:
+        if not isinstance(leader_result, gl.vm.Return):
+            return False
+        return self._fact_checks_equivalent(leader_result.calldata, validator_result)
+
     def _fact_checks_equivalent(self, leader: dict, validator: dict) -> bool:
+        if not self._is_valid_fact_consensus_payload(leader):
+            return False
+        if not self._is_valid_fact_consensus_payload(validator):
+            return False
         leader_norm = self._normalize_fact_check_payload(leader)
         validator_norm = self._normalize_fact_check_payload(validator)
         if leader_norm.get("overall_credibility") != validator_norm.get("overall_credibility"):
@@ -772,9 +800,10 @@ Return ONLY this JSON:
             if not isinstance(leader_result, gl.vm.Return):
                 return False
             validator_result = _leader_scores()
-            return self._scores_equivalent(leader_result.calldata, validator_result)
+            return self._score_validator_accepts(leader_result, validator_result)
 
         raw = gl.vm.run_nondet_unsafe(_leader_scores, _validator_scores)
+        assert self._is_valid_score_consensus_payload(raw), "Malformed score consensus result"
         return self._normalize_score_payload(raw)
 
     def _build_web_evidence_summary(self, web_evidence: dict) -> str:
@@ -815,29 +844,45 @@ Return ONLY this JSON:
             "recommendations": self._safe_list(parsed.get("recommendations", []), []),
         }
 
+    def _is_valid_score_consensus_payload(self, data) -> bool:
+        parsed = data if isinstance(data, dict) else self._try_parse_json_object(data)
+        if not isinstance(parsed, dict):
+            return False
+        for key in _SCORE_KEYS + ("confidence",):
+            if key not in parsed:
+                return False
+            try:
+                value = int(parsed.get(key))
+            except Exception:
+                return False
+            if value < 0 or value > 100:
+                return False
+        return True
+
     def _score_band(self, value) -> int:
         score = self._bounded_score(value)
         if score == 100:
             return 9
         return score // 10
 
+    def _score_validator_accepts(self, leader_result, validator_result: dict) -> bool:
+        if not isinstance(leader_result, gl.vm.Return):
+            return False
+        return self._scores_equivalent(leader_result.calldata, validator_result)
+
     def _scores_equivalent(self, leader: dict, validator: dict) -> bool:
+        if not self._is_valid_score_consensus_payload(leader):
+            return False
+        if not self._is_valid_score_consensus_payload(validator):
+            return False
         leader_norm = self._normalize_score_payload(leader)
         validator_norm = self._normalize_score_payload(validator)
-        score_keys = (
-            "technical_score",
-            "team_score",
-            "market_fit_score",
-            "security_score",
-            "execution_score",
-            "token_utility_score",
-        )
-        for key in score_keys:
+        for key in _SCORE_KEYS:
             if self._score_band(leader_norm.get(key)) != self._score_band(validator_norm.get(key)):
                 return False
         return abs(
             leader_norm.get("confidence", 70) - validator_norm.get("confidence", 70)
-        ) <= 10
+        ) <= _SCORE_CONFIDENCE_TOLERANCE
 
     # ──────────────────────────────────────────
     # Score / Ranking Helpers
@@ -1134,6 +1179,27 @@ Return ONLY this JSON:
             return fallback
         except Exception:
             return fallback
+
+    def _try_parse_json_object(self, raw):
+        try:
+            if isinstance(raw, dict):
+                return raw
+
+            text = str(raw).strip()
+            try:
+                parsed = json.loads(text)
+                return parsed if isinstance(parsed, dict) else None
+            except Exception:
+                pass
+
+            start = text.find("{")
+            end = text.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                parsed = json.loads(text[start:end + 1])
+                return parsed if isinstance(parsed, dict) else None
+            return None
+        except Exception:
+            return None
 
     def _safe_json_array(self, raw: str) -> list:
         if raw is None or raw == "":

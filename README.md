@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0x5186ecACDD82b8F8193367121448d5EA12554205` (GenLayer StudioNet)  
+**Contract:** `0xC1086aefFb6a8a8520719b8fD7F6526c2A61e5f0` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -67,6 +67,8 @@ fact result. `_fact_checks_equivalent` then compares only:
 Differences in prose (red flags wording, highlights, summary sentences) do not affect
 equivalence. If any substantive label or the credibility tier differs, the validator
 returns `False`, so a materially different leader fact result cannot feed scoring.
+Missing or invalid fact consensus fields are rejected; they are not silently converted
+into default classifications.
 
 ### Round 2 — Scoring (`_evaluate_all_scores`)
 
@@ -84,6 +86,18 @@ accepts only when all six score dimensions land in the same deterministic 10-poi
 band (`0-9`, `10-19`, ... `90-100`) and confidence differs by no more than 10 points.
 For example, `84` and `82` agree; `84` and `62` reject. Strengths, weaknesses, and
 recommendation wording are normalized for storage but are not consensus fields.
+The same-band rule is intentionally strict at band boundaries, so `80` and `89`
+agree while `79` and `80` reject. Missing, non-numeric, or out-of-range score
+consensus fields are rejected; they are not silently converted into default `50`
+or `70` values.
+
+### Malformed output handling
+
+Consensus fields are structurally validated before equivalence and again before
+storage. The contract requires all twelve fact labels, the credibility tier, all six
+score dimensions, and confidence to be present and valid. Fallback normalization is
+limited to non-consensus prose fields such as summaries, strengths, weaknesses, and
+recommendations.
 
 ### What is deliberately deterministic
 
@@ -95,6 +109,7 @@ Everything outside those two LLM calls is deterministic:
 - Tier assignment thresholds (S+ ≥ 95, S ≥ 90, …)
 - Credibility cap logic after weighted arithmetic (`low`/`very_low` -> overall score <= 60)
 - Storage reads and writes
+- Reputation and leaderboard updates based only on stored post-consensus scores
 
 Keeping these deterministic means validators cannot diverge on the structural logic —
 only on the inherently semantic judgements where divergence is meaningful.
@@ -164,9 +179,20 @@ results are labelled as provisional until `FINALIZED`.
 - **Network:** GenLayer StudioNet (gasless)
 - **Consensus primitive:** `gl.vm.run_nondet_unsafe` with explicit leader and validator functions
 - **Runner:** `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`
-- **Source hash:** `3DB38F429EA9198D87A81E1FA0580E7D824CB949531D0540F53D8932B2BE94F9`
-- **Deployment tx:** `0x2c92c4b73126b6f5e19beec413f3761efb7fd82713967fbe2244950c056927a0`
-- **Consensus smoke tx:** `0x00480803c845c8b80106a237bdf92ecb1ab53f2080fffdfb488742a2dceee7ef`
+- **Source hash:** `3F0B9CAECEA607C36904C39005A92B5F9FA7C62E58BC551FB3571714F7C19EAC`
+- **Deployment tx:** `0xe371672d8e396d9bd0652e9a33118e6def0c0604e0d199568190e352166b24fb`
+- **Consensus smoke tx:** `0x56d76e1fb4d415be45be197a5784477eb26e146f8fbfd09fe44fdf4d94cd38c4`
+- **Smoke evaluation:** project `27885557bdaa4e62ba2267665a92349f`, evaluation `1ce8259e1d47526c2fb1d4ea4750cdb7`
+
+Final local proof commands passed on the hardened source:
+
+```bash
+genvm-lint check contracts/AlphaRank.py --json
+python -m unittest tests.test_consensus_rules
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
 The contract address is updated in `src/lib/genlayer.ts` and `.env` after each
 deployment. The current address is in `NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS`.
