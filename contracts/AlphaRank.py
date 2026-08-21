@@ -630,7 +630,7 @@ Return ONLY valid JSON with no markdown fences:
 
         def _leader_fact_check():
             raw_result = gl.nondet.exec_prompt(prompt, response_format="json")
-            return self._normalize_fact_check_payload(raw_result)
+            return self._strict_fact_consensus_payload(raw_result)
 
         def _validator_fact_check(leader_result) -> bool:
             if not isinstance(leader_result, gl.vm.Return):
@@ -639,8 +639,7 @@ Return ONLY valid JSON with no markdown fences:
             return self._fact_validator_accepts(leader_result, validator_result)
 
         raw = gl.vm.run_nondet_unsafe(_leader_fact_check, _validator_fact_check)
-        assert self._is_valid_fact_consensus_payload(raw), "Malformed fact consensus result"
-        return self._normalize_fact_check_payload(raw)
+        return self._normalize_fact_check_payload(self._strict_fact_consensus_payload(raw))
 
     def _normalize_fact_check_payload(self, data) -> dict:
         parsed = data if isinstance(data, dict) else self._safe_json_loads(data, self._default_fact_check())
@@ -663,13 +662,24 @@ Return ONLY valid JSON with no markdown fences:
         return normalized
 
     def _is_valid_fact_consensus_payload(self, data) -> bool:
+        parsed = self._parse_fact_consensus_payload(data)
+        return isinstance(parsed, dict)
+
+    def _parse_fact_consensus_payload(self, data):
         parsed = data if isinstance(data, dict) else self._try_parse_json_object(data)
         if not isinstance(parsed, dict):
-            return False
+            return None
         for key in _FACT_LABEL_KEYS:
             if key not in parsed or parsed.get(key) not in _FACT_VERDICTS:
-                return False
-        return parsed.get("overall_credibility") in _CREDIBILITY_TIERS
+                return None
+        if parsed.get("overall_credibility") not in _CREDIBILITY_TIERS:
+            return None
+        return parsed
+
+    def _strict_fact_consensus_payload(self, data) -> dict:
+        parsed = self._parse_fact_consensus_payload(data)
+        assert parsed is not None, "Malformed fact consensus result"
+        return parsed
 
     def _fact_validator_accepts(self, leader_result, validator_result: dict) -> bool:
         if not isinstance(leader_result, gl.vm.Return):
@@ -794,7 +804,7 @@ Return ONLY this JSON:
 
         def _leader_scores():
             raw_result = gl.nondet.exec_prompt(prompt, response_format="json")
-            return self._normalize_score_payload(raw_result)
+            return self._strict_score_consensus_payload(raw_result)
 
         def _validator_scores(leader_result) -> bool:
             if not isinstance(leader_result, gl.vm.Return):
@@ -803,8 +813,7 @@ Return ONLY this JSON:
             return self._score_validator_accepts(leader_result, validator_result)
 
         raw = gl.vm.run_nondet_unsafe(_leader_scores, _validator_scores)
-        assert self._is_valid_score_consensus_payload(raw), "Malformed score consensus result"
-        return self._normalize_score_payload(raw)
+        return self._normalize_score_payload(self._strict_score_consensus_payload(raw))
 
     def _build_web_evidence_summary(self, web_evidence: dict) -> str:
         lines = []
@@ -845,19 +854,28 @@ Return ONLY this JSON:
         }
 
     def _is_valid_score_consensus_payload(self, data) -> bool:
+        parsed = self._parse_score_consensus_payload(data)
+        return isinstance(parsed, dict)
+
+    def _parse_score_consensus_payload(self, data):
         parsed = data if isinstance(data, dict) else self._try_parse_json_object(data)
         if not isinstance(parsed, dict):
-            return False
+            return None
         for key in _SCORE_KEYS + ("confidence",):
             if key not in parsed:
-                return False
+                return None
             try:
                 value = int(parsed.get(key))
             except Exception:
-                return False
+                return None
             if value < 0 or value > 100:
-                return False
-        return True
+                return None
+        return parsed
+
+    def _strict_score_consensus_payload(self, data) -> dict:
+        parsed = self._parse_score_consensus_payload(data)
+        assert parsed is not None, "Malformed score consensus result"
+        return parsed
 
     def _score_band(self, value) -> int:
         score = self._bounded_score(value)

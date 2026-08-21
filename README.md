@@ -6,7 +6,7 @@ fetch live web evidence and reach tamper-proof consensus — no backend makes th
 decisions, no single party controls the score.
 
 **Live App:** [alpharank-brown.vercel.app](https://alpharank-brown.vercel.app)  
-**Contract:** `0xC1086aefFb6a8a8520719b8fD7F6526c2A61e5f0` (GenLayer StudioNet)  
+**Contract:** `0x90844DDa147ad0706BBf00443241C67e4dDf3643` (GenLayer StudioNet)  
 **Explorer:** [studio.genlayer.com](https://studio.genlayer.com)
 
 ---
@@ -93,11 +93,11 @@ or `70` values.
 
 ### Malformed output handling
 
-Consensus fields are structurally validated before equivalence and again before
-storage. The contract requires all twelve fact labels, the credibility tier, all six
-score dimensions, and confidence to be present and valid. Fallback normalization is
-limited to non-consensus prose fields such as summaries, strengths, weaknesses, and
-recommendations.
+Consensus fields are structurally validated before normalization in both leader and
+validator LLM paths, before equivalence, and again before storage. The contract
+requires all twelve fact labels, the credibility tier, all six score dimensions, and
+confidence to be present and valid. Fallback normalization is limited to non-consensus
+prose fields such as summaries, strengths, weaknesses, and recommendations.
 
 ### What is deliberately deterministic
 
@@ -179,10 +179,10 @@ results are labelled as provisional until `FINALIZED`.
 - **Network:** GenLayer StudioNet (gasless)
 - **Consensus primitive:** `gl.vm.run_nondet_unsafe` with explicit leader and validator functions
 - **Runner:** `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`
-- **Source hash:** `3F0B9CAECEA607C36904C39005A92B5F9FA7C62E58BC551FB3571714F7C19EAC`
-- **Deployment tx:** `0xe371672d8e396d9bd0652e9a33118e6def0c0604e0d199568190e352166b24fb`
-- **Consensus smoke tx:** `0x56d76e1fb4d415be45be197a5784477eb26e146f8fbfd09fe44fdf4d94cd38c4`
-- **Smoke evaluation:** project `27885557bdaa4e62ba2267665a92349f`, evaluation `1ce8259e1d47526c2fb1d4ea4750cdb7`
+- **Source hash:** `9D7C6B15D4650DB4D832B40DD86D82B7E137CAB50D0694EA81FFFD4F6F5F9AA8`
+- **Deployment tx:** `0xd5c9f1fca498098c7ef1bc5ea07b9e6ea236dfad808802492e39d1383e8fdfba`
+- **Consensus smoke tx:** `0xa4249658575cabc935d6adde736406c59135826ba577c258a6fc82038f089212`
+- **Smoke evaluation:** project `e47b969dee1d8f5c305b3b8abd031ae1`, evaluation `5c3d6513e2a0018a0b480fa079807706`
 
 Final local proof commands passed on the hardened source:
 

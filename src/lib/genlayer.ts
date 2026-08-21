@@ -5,7 +5,7 @@ import type { Project, Evaluation, Ranking, LeaderboardEntry, Profile, Historica
 type CalldataEncodable = string | number | bigint | boolean | null | Uint8Array | CalldataEncodable[] | { [k: string]: CalldataEncodable };
 
 const RPC_ENDPOINT = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api';
-const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0xC1086aefFb6a8a8520719b8fD7F6526c2A61e5f0') as `0x${string}`;
+const CONTRACT_ADDRESS = (process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS || '0x90844DDa147ad0706BBf00443241C67e4dDf3643') as `0x${string}`;
 
 function getReadClient() {
   // Use the official studionet chain — includes all required SDK fields

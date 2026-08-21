@@ -125,9 +125,23 @@ class ConsensusRuleTests(unittest.TestCase):
         validator = self.fact_payload()
         self.assertFalse(self.contract._fact_checks_equivalent("not json", validator))
 
+    def test_empty_fact_payload_rejected_before_leader_normalization(self):
+        with self.assertRaisesRegex(AssertionError, "Malformed fact consensus result"):
+            self.contract._strict_fact_consensus_payload({})
+
+    def test_missing_fact_field_rejected_before_leader_normalization(self):
+        leader = self.fact_payload()
+        leader.pop("team_verifiable")
+        with self.assertRaisesRegex(AssertionError, "Malformed fact consensus result"):
+            self.contract._strict_fact_consensus_payload(leader)
+
     def test_malformed_validator_fact_result_cannot_agree_with_valid_leader(self):
         leader = self.fact_payload()
         self.assertFalse(self.contract._fact_checks_equivalent(leader, "not json"))
+
+    def test_empty_fact_leader_return_rejected_by_validator_callback(self):
+        validator = self.fact_payload()
+        self.assertFalse(self.contract._fact_validator_accepts(_FakeReturn({}), validator))
 
     def test_fact_validator_callback_rejects_disagreement(self):
         leader = self.fact_payload(team_verifiable="verified")
@@ -190,9 +204,23 @@ class ConsensusRuleTests(unittest.TestCase):
         validator = self.score_payload()
         self.assertFalse(self.contract._scores_equivalent("not json", validator))
 
+    def test_empty_score_payload_rejected_before_leader_normalization(self):
+        with self.assertRaisesRegex(AssertionError, "Malformed score consensus result"):
+            self.contract._strict_score_consensus_payload({})
+
+    def test_missing_score_field_rejected_before_leader_normalization(self):
+        leader = self.score_payload()
+        leader.pop("technical_score")
+        with self.assertRaisesRegex(AssertionError, "Malformed score consensus result"):
+            self.contract._strict_score_consensus_payload(leader)
+
     def test_malformed_validator_score_result_cannot_agree_with_valid_leader(self):
         leader = self.score_payload()
         self.assertFalse(self.contract._scores_equivalent(leader, "not json"))
+
+    def test_empty_score_leader_return_rejected_by_validator_callback(self):
+        validator = self.score_payload()
+        self.assertFalse(self.contract._score_validator_accepts(_FakeReturn({}), validator))
 
     def test_score_validator_callback_rejects_material_disagreement(self):
         leader = self.score_payload(technical_score=84)

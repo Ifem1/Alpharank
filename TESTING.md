@@ -108,12 +108,16 @@ These tests cover:
 - Validator fact payload missing a required label -> reject
 - Invalid fact verdict or credibility tier -> reject
 - Malformed leader or validator fact JSON cannot default into a valid consensus result
+- Empty `{}` and missing-field fact payloads are rejected before leader-path normalization
+- Empty fact leader returns are rejected by the validator callback path
 - Scores in the same accepted 10-point band -> accept
 - Score band boundary: `80`/`89` accepts, `79`/`80` rejects
 - Materially different score bands -> reject
 - Malicious/wrong leader fact result versus independently derived validator result -> reject
 - Malicious/wrong leader score result versus independently derived validator result -> reject
 - Missing, non-numeric, below-0, above-100, or missing-confidence score payloads -> reject
+- Empty `{}` and missing-field score payloads are rejected before leader-path normalization
+- Empty score leader returns are rejected by the validator callback path
 - Validator callback-path harnesses for fact disagreement, score disagreement, and same-band score agreement
 - `very_low`/`low` credibility cap boundaries:
   - raw 95 + `very_low` -> 60
